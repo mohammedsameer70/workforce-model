@@ -1,0 +1,14 @@
+export const ROUTES = {
+  HOMESETTINGS: '/homeSettings',
+  DASHBOARD: '/dashboard',
+  FORECASTING: '/forecasting',
+  SHIFTOPTIMIZATION: '/shiftOptimization',
+  EMPLOYEES: '/employees',
+  ANALYTICS: '/analytics',
+  CAPACITYPLANNING: '/capacity-planning',
+  MONITOR: '/monitoring',
+  BENCHMARK: '/benchmarks',
+  REPORT: '/reports',
+  NOTIFICATION: '/notifications',
+  SETTINGS: '/settings',
+}

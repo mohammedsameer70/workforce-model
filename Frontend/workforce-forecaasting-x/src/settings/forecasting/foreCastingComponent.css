@@ -1,0 +1,653 @@
+.cardsInfo {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.card {
+  width: 320px;
+  padding: 22px;
+  border-radius: 18px;
+
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+
+  transition: all 0.25s ease;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto;
+}
+
+/* TEXT */
+.card h3 {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.card p {
+  font-size: 26px;
+  font-weight: bold;
+  margin-top: 8px;
+  color: #0f172a;
+}
+
+/* 🔥 HOVER EFFECT */
+.card:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* 🎯 TOP-RIGHT DECORATIVE CIRCLE */
+.card::before {
+  content: '';
+  position: absolute;
+
+  width: 90px;
+  height: 90px;
+  background: rgba(59, 130, 246, 0.15); /* soft blue glow */
+
+  border-radius: 50%;
+
+  top: -30px;
+  right: -30px;
+
+  transition: all 0.3s ease;
+}
+
+/* 🔥 Animate circle on hover */
+.card:hover::before {
+  transform: scale(1.2);
+  background: rgba(59, 130, 246, 0.25);
+}
+.alertsPanel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.alertsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.alertsHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.criticalCount {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alertItem {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.alertItem:hover {
+  background: #f8fafc;
+}
+
+.alertIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.alertMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.critical .alertIcon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.warning .alertIcon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.success .alertIcon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.flexWorkforce {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: start;
+  align-content: center;
+}
+.workForcepanel {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconBox {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 212, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+.chartContainer {
+  padding: 2rem;
+}
+/* CHART CARD */
+.chartCard {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 18px;
+  padding: 20px;
+  margin: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* BAR CHART CONTAINER */
+.barChartContainer {
+  padding: 20px;
+  margin: 20px 0;
+}
+.microserviceCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.cardHeader p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.healthBadge {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.serviceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.serviceRow:last-child {
+  border-bottom: none;
+}
+
+.serviceName {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.serviceName h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.serviceName small {
+  color: #64748b;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.statusDot.healthy {
+  background: #22c55e;
+}
+
+.statusDot.warning {
+  background: #f59e0b;
+}
+
+.statusDot.critical {
+  background: #ef4444;
+}
+
+.resourceInfo {
+  display: flex;
+  gap: 30px;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.metric strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+/* ---------- DASHBOARD ---------- */
+
+.dashboard {
+  padding: 24px;
+}
+
+.dashboard h1 {
+  margin-bottom: 8px;
+}
+
+.dashboard p {
+  color: #64748b;
+}
+
+/* ---------- KPI CARDS ---------- */
+
+.cardsInfo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 20px 24px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.iconBox {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.icon {
+  font-size: 1.5rem;
+  color: #2563eb;
+}
+
+/* ---------- WORKFORCE SECTION ---------- */
+
+.flexWorkforce {
+  display: flex;
+  gap: 20px;
+  padding: 0 24px 24px;
+  align-items: stretch;
+}
+
+.chartContainer {
+  flex: 2;
+}
+
+.alertsPanel {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  height: 520px;
+  overflow-y: auto;
+}
+
+/* ---------- ALERTS ---------- */
+
+.alertsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.alertsHeader h3 {
+  margin: 0;
+}
+
+.criticalCount {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alertItem {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: 0.2s;
+}
+
+.alertItem:hover {
+  background: #f8fafc;
+}
+
+.alertIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.alertMeta {
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.critical .alertIcon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.warning .alertIcon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.success .alertIcon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* ---------- DEPARTMENT + MICROSERVICE ---------- */
+
+.departmentSection {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  align-items: stretch;
+}
+
+.departmentSection .chartCard {
+  flex: 2;
+  height: 480px;
+}
+
+.departmentSection .microserviceCard {
+  flex: 1;
+}
+
+/* ---------- MICROSERVICE ---------- */
+
+.microserviceCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  height: 480px;
+  overflow-y: auto;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+}
+
+.cardHeader p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.healthBadge {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.serviceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.serviceRow:last-child {
+  border-bottom: none;
+}
+
+.serviceName {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.serviceName h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.serviceName small {
+  color: #64748b;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.statusDot.healthy {
+  background: #22c55e;
+}
+
+.statusDot.warning {
+  background: #f59e0b;
+}
+
+.statusDot.critical {
+  background: #ef4444;
+}
+
+.resourceInfo {
+  display: flex;
+  gap: 24px;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.metric strong {
+  font-size: 14px;
+}
+
+/* ---------- PRIMEVUE PANEL ---------- */
+
+:deep(.p-panel) {
+  margin: 0 24px 24px;
+}
+
+:deep(.p-panel-content) {
+  padding: 20px;
+}
+.tableSubTitle {
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.shiftCell {
+  display: inline-block;
+  min-width: 50px;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.morning {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.afternoon {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.night {
+  background: #e9d5ff;
+  color: #7e22ce;
+}
+.workforceSection {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.workforceChart {
+  flex: 2;
+  min-width: 0;
+}
+
+.workforceChart .chartCard {
+  height: 450px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.alertsPanel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  height: 450px;
+  overflow-y: auto;
+}
+
+.alertsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.criticalCount {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}

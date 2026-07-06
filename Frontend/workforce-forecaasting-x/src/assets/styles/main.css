@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+:root {
+  --app-font: 'Roboto', 'Segoe UI', Arial, sans-serif;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--app-font);
+}
+/* main.css */
+
+:root {
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card,
+.chartCard,
+.alertsPanel,
+.microserviceCard {
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  border: 1px solid var(--p-content-border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.alertMeta,
+.tableSubTitle,
+.cardHeader p,
+.serviceName small {
+  color: var(--p-text-muted-color);
+}
+
+.alertTitle,
+.card h3,
+.card p,
+.serviceName h4 {
+  color: var(--p-text-color);
+}
+/* main.css */
+
+.p-panel,
+.p-panel-header,
+.p-panel-content,
+.p-datatable,
+.p-inputtext {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+.p-panel {
+  background: var(--p-content-background) !important;
+  border: 1px solid var(--p-content-border-color) !important;
+  color: var(--p-text-color) !important;
+}
+
+.p-panel-header {
+  background: var(--p-content-background) !important;
+  color: var(--p-text-color) !important;
+  border-bottom: 1px solid var(--p-content-border-color) !important;
+}
+
+.p-panel-content {
+  background: var(--p-content-background) !important;
+  color: var(--p-text-color) !important;
+}
+:root {
+  --app-bg: #ffffff;
+  --panel-bg: #ffffff;
+  --text-color: #1f2937;
+}
+
+html[data-theme='dark'] {
+  --app-bg: #0f1419;
+  --panel-bg: #1a1f2e;
+  --text-color: #e5e7eb;
+}
