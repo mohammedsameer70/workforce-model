@@ -38,12 +38,14 @@ drop_identifier_columns = [
 
 drop_columns = [
     "DateOfBirth",
+    "HireDate",
+    "AttendanceDate",
+    "LastUpdated",
     "ClockInTime",
     "ClockOutTime",
     "WorkforceStatus",
     "ProcessingStatus"
 ]
-
 
 # =====================================
 # Load Dataset
