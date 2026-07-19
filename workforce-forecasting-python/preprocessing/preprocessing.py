@@ -1,226 +1,243 @@
 import pandas as pd
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+# =====================================================
+# LOAD DATASET
+# =====================================================
 
 
-# =====================================
-# Columns
-# =====================================
+def load_dataset(path):
 
-attendance_columns = [
-    "WorkingHours",
-    "BreakHours",
-    "OvertimeHours",
-    "LateMinutes",
-    "EarlyDepartureMinutes",
-    "ProductivityScore",
-    "PerformanceRating",
-    "UtilizationRate",
-    "CapacityUtilization",
-    "EfficiencyScore"
-]
+    print("\nLoading Workforce Forecasting Dataset...")
 
-date_columns = [
-    "DateOfBirth",
-    "HireDate",
-    "AttendanceDate",
-    "LastUpdated"
-]
+    df = pd.read_csv(path)
 
-drop_identifier_columns = [
-    "EmployeeID",
-    "FirstName",
-    "LastName",
-    "Email",
-    "PhoneNumber"
-]
-
-drop_columns = [
-    "DateOfBirth",
-    "HireDate",
-    "AttendanceDate",
-    "LastUpdated",
-    "ClockInTime",
-    "ClockOutTime",
-    "WorkforceStatus",
-    "ProcessingStatus"
-]
-
-# =====================================
-# Load Dataset
-# =====================================
-
-def load_dataset(file_path):
-    print("\nLoading Dataset...\n")
-    return pd.read_csv(file_path)
+    return df
 
 
-# =====================================
-# Inspect Dataset
-# =====================================
+# =====================================================
+# INSPECT DATASET
+# =====================================================
+
 
 def inspect_dataset(df):
 
-    print("=" * 50)
-    print("DATASET INFORMATION")
-    print("=" * 50)
+    print("\n" + "=" * 60)
+    print("WORKFORCE FORECASTING DATASET")
+    print("=" * 60)
 
     print(f"\nShape : {df.shape}")
+
+    print("\nColumns")
+    print(df.columns.tolist())
 
     print("\nData Types")
     print(df.dtypes)
 
     print("\nMissing Values")
-    print(df.isnull().sum()[df.isnull().sum() > 0])
+    print(df.isnull().sum())
 
     print("\nDuplicate Rows")
     print(df.duplicated().sum())
 
-    print("=" * 50)
+
+# =====================================================
+# PREPROCESS DATASET
+# =====================================================
 
 
-# =====================================
-# Clean Dataset
-# =====================================
+def preprocess_dataset(df):
 
-def clean_dataset(df):
+    print("\nPreprocessing Dataset...")
 
-    print("\nCleaning Dataset...\n")
+    df = df.copy()
 
-    # Fill attendance values with 0
-    for column in attendance_columns:
-        df[column] = df[column].fillna(0)
+    # -------------------------------------------------
+    # Remove duplicates
+    # -------------------------------------------------
 
-    # Fill Special Event
-    df["SpecialEvent"] = df["SpecialEvent"].fillna("No Event")
+    df.drop_duplicates(inplace=True)
 
-    # Convert dates
-    for column in date_columns:
-        df[column] = pd.to_datetime(df[column])
+    # -------------------------------------------------
+    # Convert Date
+    # -------------------------------------------------
 
-    # Create ML dataset
-    ml_df = df.copy()
+    df["AttendanceDate"] = pd.to_datetime(df["AttendanceDate"])
 
-    # Remove identifiers
-    ml_df.drop(columns=drop_identifier_columns, inplace=True)
+    # -------------------------------------------------
+    # Sort Data
+    # -------------------------------------------------
 
-    print("Cleaning Completed.")
+    df = df.sort_values(["Department", "AttendanceDate"]).reset_index(drop=True)
 
-    return df, ml_df
+    # -------------------------------------------------
+    # Calendar Features
+    # -------------------------------------------------
 
+    df["Year"] = df["AttendanceDate"].dt.year
+    df["Quarter"] = df["AttendanceDate"].dt.quarter
+    df["Month"] = df["AttendanceDate"].dt.month
+    df["WeekOfYear"] = df["AttendanceDate"].dt.isocalendar().week.astype(int)
+    df["DayOfWeek"] = df["AttendanceDate"].dt.dayofweek
 
-# =====================================
-# Encode Dataset
-# =====================================
+    df["Weekend"] = (df["DayOfWeek"] >= 5).astype(int)
 
-def encode_dataset(ml_df):
+    df["IsMonthStart"] = df["AttendanceDate"].dt.is_month_start.astype(int)
 
-    print("\nEncoding Dataset...\n")
+    df["IsMonthEnd"] = df["AttendanceDate"].dt.is_month_end.astype(int)
 
-    # Remove unnecessary columns
-    ml_df.drop(columns=drop_columns, inplace=True)
+    # -------------------------------------------------
+    # Historical Features
+    # -------------------------------------------------
 
-    # Binary Encoding
-    binary_columns = [
-        "Gender",
-        "EmploymentType",
-        "PublicHoliday",
-        "Weekend"
-    ]
+    dept = df.groupby("Department")
 
-    encoder = LabelEncoder()
+    df["PreviousDayDemand"] = dept["WorkforceDemand"].shift(1)
 
-    for column in binary_columns:
-        ml_df[column] = encoder.fit_transform(ml_df[column])
-
-    # Alert Level Mapping
-    ml_df["AlertLevel"] = ml_df["AlertLevel"].map({
-        "Low": 0,
-        "Medium": 1,
-        "High": 2
-    })
-
-    # One Hot Encoding
-    categorical_columns = [
-        "Department",
-        "JobRole",
-        "Team",
-        "Manager",
-        "Branch",
-        "Location",
-        "DayOfWeek",
-        "Shift",
-        "PreferredShift",
-        "AttendanceStatus",
-        "WeatherCondition",
-        "Season",
-        "SpecialEvent",
-        "NotificationType"
-    ]
-
-    ml_df = pd.get_dummies(
-        ml_df,
-        columns=categorical_columns,
-        drop_first=True,
-        dtype=int
+    df["Previous3DayAverage"] = dept["WorkforceDemand"].transform(
+        lambda x: x.shift(1).rolling(3, min_periods=1).mean()
     )
 
-    print("Encoding Completed.")
-    print(f"Dataset Shape : {ml_df.shape}")
+    df["Previous7DayAverage"] = dept["WorkforceDemand"].transform(
+        lambda x: x.shift(1).rolling(7, min_periods=1).mean()
+    )
 
-    return ml_df
+    if "WorkingHours" in df.columns:
+        df["PreviousDayHours"] = dept["WorkingHours"].shift(1)
+
+    if "EmployeesOnLeave" in df.columns:
+        df["PreviousLeaveCount"] = dept["EmployeesOnLeave"].shift(1)
+
+    # -------------------------------------------------
+    # Forecast Target
+    # -------------------------------------------------
+
+    df["TargetDemand"] = dept["WorkforceDemand"].shift(-1)
+
+    # -------------------------------------------------
+    # Remove First/Last Rows Created by Shift
+    # -------------------------------------------------
+    print("\nRows before dropna:", len(df))
+
+    print("\nMissing values by column:")
+    print(df.isnull().sum()[df.isnull().sum() > 0].sort_values(ascending=False))
+    required_columns = [
+        "TargetDemand",
+        "PreviousDayDemand",
+        "Previous3DayAverage",
+        "Previous7DayAverage",
+    ]
+
+    if "PreviousDayHours" in df.columns:
+        required_columns.append("PreviousDayHours")
+
+    df.dropna(subset=required_columns, inplace=True)
+    print("\nRows after dropna:", len(df))
+
+    # -------------------------------------------------
+    # Remove Identifier Columns
+    # -------------------------------------------------
+
+    columns_to_drop = [
+        "EmployeeID",
+        "EmployeeName",
+        "Supervisor",
+        "Timestamp",
+        "ClockIn",
+        "ClockOut",
+        "Remarks",
+    ]
+
+    existing_columns = [col for col in columns_to_drop if col in df.columns]
+
+    df.drop(columns=existing_columns, inplace=True, errors="ignore")
+
+    print("\nDataset preprocessing completed.")
+
+    print(f"Final Shape : {df.shape}")
+    # -------------------------------------------------
+
+    # Fill Remaining Missing Numeric Values
+    # -------------------------------------------------
+
+    numeric_columns = df.select_dtypes(include=["number"]).columns
+
+    for col in numeric_columns:
+        if df[col].isnull().sum() > 0:
+            df[col] = df[col].fillna(df[col].median())
+
+    return df
 
 
-# =====================================
-# Split Features and Target
-# =====================================
+# =====================================================
+# ENCODE DATASET
+# =====================================================
 
-def split_features_target(ml_df):
 
-    X = ml_df.drop(columns=["WorkforceDemand"])
-    y = ml_df["WorkforceDemand"]
+def encode_dataset(df):
+
+    print("\nEncoding Dataset...")
+
+    df = df.copy()
+
+    categorical_columns = df.select_dtypes(include=["object"]).columns.tolist()
+
+    if "AttendanceDate" in categorical_columns:
+        categorical_columns.remove("AttendanceDate")
+
+    if len(categorical_columns) > 0:
+
+        df = pd.get_dummies(df, columns=categorical_columns, drop_first=True)
+
+    print("Encoding completed.")
+    print("\nRemaining Missing Values")
+    print(df.isnull().sum()[df.isnull().sum() > 0].sort_values(ascending=False))
+
+    return df
+
+
+# =====================================================
+# SPLIT FEATURES & TARGET
+# =====================================================
+
+
+def split_features_target(df):
+
+    X = df.drop(
+        columns=[
+            "AttendanceDate",
+            "TargetDemand",
+        ],
+        errors="ignore",
+    )
+
+    y = df["TargetDemand"]
 
     return X, y
 
 
-# =====================================
-# Train Test Split
-# =====================================
+# =====================================================
+# TRAIN TEST SPLIT
+# =====================================================
+
 
 def split_train_test(X, y):
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.20,
-        random_state=42
+    print("\nSplitting Dataset (Chronological 80/20)...")
+
+    split_index = int(len(X) * 0.80)
+
+    X_train = X.iloc[:split_index].copy()
+    X_test = X.iloc[split_index:].copy()
+
+    y_train = y.iloc[:split_index].copy()
+    y_test = y.iloc[split_index:].copy()
+
+    print(f"Training Samples : {len(X_train)}")
+    print(f"Testing Samples  : {len(X_test)}")
+
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
     )
-
-    return X_train, X_test, y_train, y_test
-
-
-# =====================================
-# Main (Testing)
-# =====================================
-
-if __name__ == "__main__":
-
-    df = load_dataset("../dataset/workforce_forecasting_dataset_2024.csv")
-
-    inspect_dataset(df)
-
-    df, ml_df = clean_dataset(df)
-
-    ml_df = encode_dataset(ml_df)
-
-    X, y = split_features_target(ml_df)
-
-    X_train, X_test, y_train, y_test = split_train_test(X, y)
-
-    print("\nFinal Shapes")
-    print("------------------------")
-    print("X Train :", X_train.shape)
-    print("X Test  :", X_test.shape)
-    print("y Train :", y_train.shape)
-    print("y Test  :", y_test.shape)

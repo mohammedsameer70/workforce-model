@@ -1,37 +1,51 @@
 from xgboost import XGBRegressor
+from sklearn.model_selection import RandomizedSearchCV
 
 
 def train_xgboost(X_train, y_train):
-    """
-    Train XGBoost Regression Model
-    """
 
-    print("\n========== XGBOOST TRAINING ==========\n")
+    print("\n===================================")
+    print("TRAINING XGBOOST")
+    print("===================================")
 
-    model = XGBRegressor(
-        n_estimators=100,
-        learning_rate=0.1,
-        max_depth=6,
+    xgb = XGBRegressor(
+        objective="reg:squarederror",
         random_state=42,
-        objective="reg:squarederror"
+        tree_method="hist",
+        n_jobs=-1,
+        verbosity=0,
     )
 
-    model.fit(X_train, y_train)
+    param_grid = {
+        "n_estimators": [100, 200, 300, 500],
+        "max_depth": [3, 4, 5, 6, 8],
+        "learning_rate": [0.01, 0.03, 0.05, 0.1],
+        "subsample": [0.7, 0.8, 0.9, 1.0],
+        "colsample_bytree": [0.7, 0.8, 0.9, 1.0],
+        "min_child_weight": [1, 3, 5],
+        "gamma": [0, 0.1, 0.3, 0.5],
+        "reg_alpha": [0, 0.01, 0.1],
+        "reg_lambda": [1, 1.5, 2],
+    }
 
-    print("Training completed successfully.")
+    random_search = RandomizedSearchCV(
+        estimator=xgb,
+        param_distributions=param_grid,
+        n_iter=10,
+        cv=3,
+        scoring="neg_root_mean_squared_error",
+        random_state=42,
+        n_jobs=-1,
+        verbose=1,
+    )
 
-    return model
+    random_search.fit(X_train, y_train)
 
+    print("\nBest Parameters")
+    print(random_search.best_params_)
 
-def predict_xgboost(model, X_test):
-    """
-    Make predictions using trained XGBoost model
-    """
+    print(f"\nBest CV RMSE : {-random_search.best_score_:.4f}")
 
-    print("\n========== MAKING PREDICTIONS ==========\n")
+    print("\nXGBoost Training Completed.")
 
-    predictions = model.predict(X_test)
-
-    print("Prediction completed successfully.")
-
-    return predictions
+    return random_search.best_estimator_

@@ -1,209 +1,191 @@
-import time
-
 from preprocessing.preprocessing import (
     load_dataset,
     inspect_dataset,
-    clean_dataset,
+    preprocess_dataset,
     encode_dataset,
     split_features_target,
-    split_train_test
+    split_train_test,
+)
+import numpy as np
+
+from preprocessing.lstm_preprocessing import prepare_lstm_data
+
+from models.linear_regression_model import train_linear_regression
+from models.random_forest_model import train_random_forest
+from models.xgboost_model import train_xgboost
+from models.lstm_model import train_lstm
+
+from evaluation.evaluation import (
+    evaluate_model,
+    save_results,
 )
 
-from evaluation.evaluation import evaluate_model
-
-# ===========================
-# Import Models
-# ===========================
-
-from models.linear_regression_model import (
-    train_linear_regression,
-    predict_linear_regression
-)
-
-from models.random_forest_model import (
-    train_random_forest,
-    predict_random_forest
-)
-
-from models.xgboost_model import (
-    train_xgboost,
-    predict_xgboost
-)
-
-from models.lstm_model import (
-    train_lstm,
-    predict_lstm
-)
-
-# ===================================================
-# Select Model
-# ===================================================
-
-MODEL = "linear_regression"
-
-# Available Options:
-# linear_regression
-# random_forest
-# xgboost
-# lstm
-# all
-
-
-# ===================================================
-# Model Dictionary
-# ===================================================
-
-MODELS = {
-    "linear_regression": {
-        "name": "Linear Regression",
-        "train": train_linear_regression,
-        "predict": predict_linear_regression
-    },
-    "random_forest": {
-        "name": "Random Forest",
-        "train": train_random_forest,
-        "predict": predict_random_forest
-    },
-    "xgboost": {
-        "name": "XGBoost",
-        "train": train_xgboost,
-        "predict": predict_xgboost
-    },
-    "lstm": {
-        "name": "LSTM",
-        "train": train_lstm,
-        "predict": predict_lstm
-    }
-}
-
-
-# ===================================================
-# Run Model
-# ===================================================
-
-def run_model(model_key, X_train, X_test, y_train, y_test):
-
-    model_info = MODELS[model_key]
-
-    print("\n" + "=" * 70)
-    print(f"RUNNING MODEL : {model_info['name']}")
-    print("=" * 70)
-
-    print(f"Training Samples : {len(X_train)}")
-    print(f"Testing Samples  : {len(X_test)}")
-    print(f"Features         : {X_train.shape[1]}")
-
-    start_time = time.time()
-
-    # Train Model
-    model = model_info["train"](X_train, y_train)
-
-    # Predict
-    predictions = model_info["predict"](model, X_test)
-
-    # Evaluate
-    results = evaluate_model(y_test, predictions)
-
-    end_time = time.time()
-
-    execution_time = end_time - start_time
-
-    print("\nMODEL SUMMARY")
-    print("-" * 35)
-    print(f"Model          : {model_info['name']}")
-    print(f"RMSE           : {results['RMSE']:.4f}")
-    print(f"MAE            : {results['MAE']:.4f}")
-    print(f"MAPE           : {results['MAPE']:.2f}%")
-    print(f"R²             : {results['R2']:.4f}")
-    print(f"Execution Time : {execution_time:.2f} seconds")
-
-    results["Execution Time"] = execution_time
-
-    return results
-
-
-# ===================================================
-# Main
-# ===================================================
 
 def main():
 
-    print("\n========== WORKFORCE FORECASTING ==========\n")
+    # =====================================================
+    # LOAD DATASET
+    # =====================================================
 
-    print(f"Selected Model : {MODEL}")
+    dataset_path = "dataset/workforce_forecasting_dataset_3years.csv"
 
-    # Load Dataset
-    df = load_dataset(
-        "dataset/workforce_forecasting_dataset_2024.csv"
-    )
+    workforce_df = load_dataset(dataset_path)
 
-    # Inspect Dataset
-    inspect_dataset(df)
+    # =====================================================
+    # INSPECT DATASET
+    # =====================================================
 
-    # Clean Dataset
-    df, ml_df = clean_dataset(df)
+    inspect_dataset(workforce_df)
 
-    # Encode Dataset
-    ml_df = encode_dataset(ml_df)
+    # =====================================================
+    # PREPROCESS DATASET
+    # =====================================================
 
-    # Features & Target
-    X, y = split_features_target(ml_df)
+    workforce_df = preprocess_dataset(workforce_df)
 
-    # Train Test Split
+    # Keep a copy for LSTM before encoding
+    lstm_df = workforce_df.copy()
+
+    # =====================================================
+    # ENCODE DATASET
+    # =====================================================
+
+    workforce_df = encode_dataset(workforce_df)
+
+    # =====================================================
+    # SPLIT FEATURES & TARGET
+    # =====================================================
+
+    X, y = split_features_target(workforce_df)
+
     X_train, X_test, y_train, y_test = split_train_test(X, y)
 
-    # ===================================================
+    # =====================================================
+    # STORE RESULTS
+    # =====================================================
 
-    if MODEL != "all":
+    results = []
 
-        run_model(
-            MODEL,
-            X_train,
-            X_test,
-            y_train,
-            y_test
+    # =====================================================
+    # LINEAR REGRESSION
+    # =====================================================
+
+    print("\n==============================")
+    print("LINEAR REGRESSION")
+    print("==============================")
+
+    lr_model = train_linear_regression(X_train, y_train)
+
+    lr_predictions = lr_model.predict(X_test)
+
+    results.append(
+        evaluate_model(
+            y_test,
+            lr_predictions,
+            "Linear Regression",
         )
+    )
 
-    else:
+    # =====================================================
+    # RANDOM FOREST
+    # =====================================================
 
-        comparison_results = {}
+    print("\n==============================")
+    print("RANDOM FOREST")
+    print("==============================")
 
-        for model in MODELS.keys():
+    rf_model = train_random_forest(X_train, y_train)
 
-            comparison_results[model] = run_model(
-                model,
-                X_train,
-                X_test,
-                y_train,
-                y_test
-            )
+    rf_predictions = rf_model.predict(X_test)
 
-        print("\n")
-        print("=" * 100)
-        print("FINAL MODEL COMPARISON")
-        print("=" * 100)
-
-        print(
-            f'{"Model":25}'
-            f'{"RMSE":>10}'
-            f'{"MAE":>10}'
-            f'{"MAPE":>12}'
-            f'{"R²":>10}'
-            f'{"Time(s)":>12}'
+    results.append(
+        evaluate_model(
+            y_test,
+            rf_predictions,
+            "Random Forest",
         )
+    )
 
-        print("-" * 100)
+    # =====================================================
+    # XGBOOST
+    # =====================================================
 
-        for model_key, metrics in comparison_results.items():
+    print("\n==============================")
+    print("XGBOOST")
+    print("==============================")
 
-            print(
-                f'{MODELS[model_key]["name"]:25}'
-                f'{metrics["RMSE"]:10.4f}'
-                f'{metrics["MAE"]:10.4f}'
-                f'{metrics["MAPE"]:11.2f}%'
-                f'{metrics["R2"]:10.4f}'
-                f'{metrics["Execution Time"]:12.2f}'
-            )
+    xgb_model = train_xgboost(X_train, y_train)
+
+    xgb_predictions = xgb_model.predict(X_test)
+
+    results.append(
+        evaluate_model(
+            y_test,
+            xgb_predictions,
+            "XGBoost",
+        )
+    )
+
+    # =====================================================
+    # LSTM
+    # =====================================================
+
+    print("\n==============================")
+    print("LSTM")
+    print("==============================")
+
+    (
+        X_train_lstm,
+        X_test_lstm,
+        y_train_lstm,
+        y_test_lstm,
+        target_scaler,
+        test_departments,
+    ) = prepare_lstm_data(lstm_df)
+
+    lstm_model, history = train_lstm(
+        X_train_lstm,
+        y_train_lstm,
+    )
+
+    predictions = lstm_model.predict(X_test_lstm)
+
+    predictions = target_scaler.inverse_transform(predictions)
+
+    y_actual = target_scaler.inverse_transform(y_test_lstm.reshape(-1, 1))
+    errors = np.abs(y_actual.flatten() - predictions.flatten())
+
+    print("\n================ DEBUG ================")
+    print("Max Error   :", np.max(errors))
+    print("Mean Error  :", np.mean(errors))
+    print("Median Error:", np.median(errors))
+
+    idx = np.argmax(errors)
+
+    print("\nWorst Prediction")
+    print("Index      :", idx)
+    print("Actual     :", y_actual[idx][0])
+    print("Prediction :", predictions[idx][0])
+    print("Error      :", errors[idx])
+    print("Department :", test_departments[idx])
+    print("=======================================\n")
+    results.append(
+        evaluate_model(
+            y_actual.flatten(),
+            predictions.flatten(),
+            "LSTM",
+        )
+    )
+
+    # =====================================================
+    # SAVE RESULTS
+    # =====================================================
+
+    save_results(results)
+
+    print("\n====================================")
+    print("PROJECT COMPLETED SUCCESSFULLY")
+    print("====================================")
 
 
 if __name__ == "__main__":
