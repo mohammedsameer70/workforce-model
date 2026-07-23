@@ -27,7 +27,7 @@ def main():
     # LOAD DATASET
     # =====================================================
 
-    dataset_path = "dataset/workforce_forecasting_dataset_3years.csv"
+    dataset_path = "dataset/workforce_forecasting_dataset.csv"
 
     workforce_df = load_dataset(dataset_path)
 
