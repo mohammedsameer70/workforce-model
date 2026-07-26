@@ -1,16 +1,12 @@
-from fastapi import APIRouter, UploadFile, HTTPException
+from fastapi import APIRouter, UploadFile
 import pandas as pd
-import logging
 import io
 
-from ..service.dataset_service import DatasetService
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from ..model_service.prediction_service import PredictionService
 
 router = APIRouter()
 
-datasetService = DatasetService()
+predictionService = PredictionService()
 
 
 @router.get("/")
@@ -21,20 +17,12 @@ async def home():
 @router.post("/predict")
 async def predict(file: UploadFile):
 
-    print("STEP 1")
-
     content = await file.read()
-
-    print("STEP 2")
-
     df = pd.read_csv(io.BytesIO(content))
+    print(df.columns.tolist())
 
-    print("STEP 3")
-    print(df.head())
+    from preprocessing.preprocessing import prepare_prediction_data
 
-    result = datasetService.read_csv(df)
+    X = prepare_prediction_data(df)
 
-    print("STEP 4")
-    print(result)
-
-    return result
+    return predictionService.predict(X)
