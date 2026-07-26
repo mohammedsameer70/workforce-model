@@ -1,8 +1,6 @@
 from fastapi import FastAPI
+from serviceFast.controller.workForceController import router
 
-app = FastAPI()
+app = FastAPI(title="Workforce Forecasting API", version="1.0.0")
 
-
-@app.get("/")
-def home():
-    return {"message": "Hello"}
+app.include_router(router)
