@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WorkforceApplicationBackend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="workforce-model" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="Spring Boot" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
