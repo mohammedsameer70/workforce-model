@@ -1,0 +1,8 @@
+{
+    "Model": "XGBoost",
+    "RMSE": 3.7616,
+    "MAE": 2.7884,
+    "MAPE": 2.37,
+    "R2": 0.9238,
+    "DeploymentModel": "XGBoost"
+}

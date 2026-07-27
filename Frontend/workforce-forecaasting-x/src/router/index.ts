@@ -3,6 +3,7 @@ import { ROUTES } from './routes'
 import HomeSettingComponent from '@/homeSetting/homeSettingComponent.vue'
 import dashboardComponent from '@/settings/dashboard/dashboardComponent.vue'
 import forecastingComponent from '../settings/forecasting/foreCastingComponent.vue'
+import AIModelsComponent from '@/settings/aiModels/aiModelsComponent.vue'
 import ShiftOptimizationComponent from '@/settings/shiftOptimization/shiftOptimizationComponent.vue'
 import EmployeesComponent from '@/settings/employees/employeesComponent.vue'
 import AnalyticsComponent from '@/settings/analyze/analyticsComponent.vue'
@@ -33,6 +34,11 @@ const router = createRouter({
       path: ROUTES.FORECASTING,
       name: 'forecasting',
       component: forecastingComponent,
+    },
+    {
+      path: ROUTES.AI_MODELS,
+      name: 'ai-models',
+      component: AIModelsComponent,
     },
     {
       path: ROUTES.SHIFTOPTIMIZATION,

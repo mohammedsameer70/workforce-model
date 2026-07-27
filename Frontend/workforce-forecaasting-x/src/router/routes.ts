@@ -2,6 +2,7 @@ export const ROUTES = {
   HOMESETTINGS: '/homeSettings',
   DASHBOARD: '/dashboard',
   FORECASTING: '/forecasting',
+  AI_MODELS: '/ai-models',
   SHIFTOPTIMIZATION: '/shiftOptimization',
   EMPLOYEES: '/employees',
   ANALYTICS: '/analytics',

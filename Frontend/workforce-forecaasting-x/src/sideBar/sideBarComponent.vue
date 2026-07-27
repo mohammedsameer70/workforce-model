@@ -15,6 +15,7 @@ const toggleMenu = () => {
 const items = ref([
   { label: lbl.DASHBOARD, icon: 'pi pi-desktop', route: '/dashboard' },
   { label: lbl.FORECASTING, icon: 'pi pi-chart-line', route: '/forecasting' },
+  { label: lbl.AI_MODELS, icon: 'pi pi-brain', route: '/ai-models' },
   { label: lbl.SHIFTOPTIMIZATION, icon: 'pi pi-calendar-clock', route: '/shiftoptimization' },
   { label: lbl.EMPLOYEES, icon: 'pi pi-users', route: '/employees' },
   { label: lbl.ANALYTICS, icon: 'pi pi-chart-scatter', route: '/analytics' },

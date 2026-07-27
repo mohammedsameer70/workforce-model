@@ -1,6 +1,11 @@
 from fastapi import FastAPI
-from serviceFast.controller.workForceController import router
 
-app = FastAPI(title="Workforce Forecasting API", version="1.0.0")
+from serviceFast.controller.train_controller import router as train_router
+from serviceFast.controller.prediction_controller.prediction_router import (
+    router as prediction_router,
+)
 
-app.include_router(router)
+app = FastAPI()
+
+app.include_router(train_router)
+app.include_router(prediction_router)

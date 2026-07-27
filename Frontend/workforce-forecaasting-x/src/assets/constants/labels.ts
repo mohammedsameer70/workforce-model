@@ -1,6 +1,7 @@
 export const lbl = {
   DASHBOARD: 'Dashboard',
   FORECASTING: 'Forecasting',
+  AI_MODELS: 'AI Models',
   SHIFTOPTIMIZATION: 'Shift Optimization',
   EMPLOYEES: 'Employees',
   ANALYTICS: 'Analytics',
@@ -19,6 +20,9 @@ export const lbl = {
 
   forecastingDesc:
     'Enables users to execute forecasting models, predict workforce demand, and analyse future staffing requirements.',
+
+  aiModelsDesc:
+    'Manage the complete ML lifecycle - upload training datasets, train multiple algorithms, compare model performance, and make predictions with the best-performing model.',
 
   shiftOptimizationDesc:
     'Assists in evaluating workforce allocation strategies and improving shift scheduling efficiency.',
