@@ -12,6 +12,7 @@ from preprocessing.preprocessing import (
 from training.model_trainer import ModelTrainer
 from training.model_selector import ModelSelector
 from training.model_saver import ModelSaver
+from training.prediction_result_saver import PredictionResultSaver
 
 
 class TrainingService:
@@ -20,6 +21,7 @@ class TrainingService:
         self.trainer = ModelTrainer()
         self.selector = ModelSelector()
         self.saver = ModelSaver()
+        self.prediction_saver = PredictionResultSaver()
 
     def train(self, dataset_path, selected_models):
 
@@ -34,7 +36,10 @@ class TrainingService:
         # Preprocess
         workforce_df = preprocess_dataset(workforce_df)
 
-        # Keep original copy for LSTM
+        # Copy for Dashboard/Reports
+        dashboard_df = workforce_df.copy()
+
+        # Copy for LSTM
         lstm_df = workforce_df.copy()
 
         # Encode
@@ -57,9 +62,51 @@ class TrainingService:
 
         # Select Best Model
         best_model = self.selector.select_best(results)
+        deployment_model_name = best_model["Model"]
+
+        # If LSTM is selected, use the deployment model instead
+        if deployment_model_name == "LSTM":
+            for candidate in ["XGBoost", "Random Forest", "Linear Regression"]:
+                if candidate in trained_models:
+                    deployment_model_name = candidate
+                    break
+
+        deployment_model = trained_models[deployment_model_name]
+        predictions = deployment_model.predict(X)
+        dashboard_df["PredictedDemand"] = predictions
+        dashboard_df = dashboard_df[
+            [
+                "AttendanceDate",
+                "Department",
+                "Team",
+                "Shift",
+                "WorkforceDemand",
+                "PredictedDemand",
+                "CurrentCapacity",
+                "RequiredCapacity",
+                "AvailableHeadroom",
+                "CapacityLoad",
+                "CapacityUtilization",
+                "UtilizationRate",
+                "EfficiencyScore",
+                "ProductivityScore",
+                "HistoricalDemand",
+                "PeakUtilization",
+                "ScalingEvents",
+                "WorkforceStatus",
+                "DayOfWeek",
+                "Month",
+                "Quarter",
+                "Year",
+            ]
+        ]
+
+        self.prediction_saver.save(dashboard_df)
 
         # Save Model
         self.saver.save(best_model, trained_models, X.columns.tolist())
+        print(f"Rows in X           : {len(X)}")
+        print(f"Prediction Count    : {len(predictions)}")
 
         print("\n====================================")
         print("TRAINING COMPLETED")
