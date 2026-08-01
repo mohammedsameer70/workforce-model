@@ -105,11 +105,12 @@ def prepare_lstm_data(df, sequence_length=14):
 
     X_train = []
     X_test = []
+    X_dashboard = []
 
     y_train = []
     y_test = []
-    test_departments = []
 
+    test_departments = []
     for _, group in df.groupby("Department"):
 
         group = group.reset_index(drop=True)
@@ -202,6 +203,23 @@ def prepare_lstm_data(df, sequence_length=14):
             y_test.append(combined_targets[i])
 
             test_departments.append(combined.iloc[i]["Department"])
+            # =================================================
+        # DASHBOARD SEQUENCES
+        # =================================================
+
+        full_group = group.copy()
+
+        full_group[feature_columns] = full_group[feature_columns].astype(np.float32)
+
+        full_group[feature_columns] = feature_scaler.transform(
+            full_group[feature_columns]
+        ).astype(np.float32)
+
+        full_features = full_group[feature_columns].to_numpy(dtype=np.float32)
+
+        for i in range(sequence_length, len(full_group)):
+
+            X_dashboard.append(full_features[i - sequence_length : i])
 
     # =====================================================
     # CONVERT TO NUMPY
@@ -214,6 +232,10 @@ def prepare_lstm_data(df, sequence_length=14):
 
     X_test = np.asarray(
         X_test,
+        dtype=np.float32,
+    )
+    X_dashboard = np.asarray(
+        X_dashboard,
         dtype=np.float32,
     )
 
@@ -258,5 +280,25 @@ def prepare_lstm_data(df, sequence_length=14):
     # =====================================================
     # RETURN
     # =====================================================
+    print("\n========== LSTM DEBUG ==========")
+    print("X_train shape:", X_train.shape)
+    print("X_test shape :", X_test.shape)
+    print("y_train shape:", y_train.shape)
+    print("y_test shape :", y_test.shape)
+    print("X_dashboard shape:", X_dashboard.shape)
 
-    return (X_train, X_test, y_train, y_test, target_scaler, test_departments)
+    print("X_train dtype:", X_train.dtype)
+    print("X_test dtype :", X_test.dtype)
+
+    print("Sample X_train:", X_train[0].shape)
+    print("================================")
+
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        X_dashboard,
+        target_scaler,
+        test_departments,
+    )

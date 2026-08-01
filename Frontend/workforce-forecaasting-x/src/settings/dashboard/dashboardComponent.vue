@@ -168,6 +168,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import CLDashboardService from '../aiModels/dashboardService'
 
 ChartJS.register(
   LineElement,
@@ -179,6 +180,7 @@ ChartJS.register(
   Tooltip,
   Legend,
 )
+const getDashoboardData = CLDashboardService.getDashboardData()
 const staffingData = ref([
   {
     department: 'Inbound',
@@ -381,6 +383,8 @@ const barChartData = ref()
 const barChartOptions = ref()
 
 onMounted(() => {
+
+  
   chartData.value = setChartData()
   chartOptions.value = setChartOptions()
   barChartData.value = setBarChartData()

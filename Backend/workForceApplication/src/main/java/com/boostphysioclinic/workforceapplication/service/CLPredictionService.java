@@ -1,51 +1,100 @@
 package com.boostphysioclinic.workforceapplication.service;
 
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import com.boostphysioclinic.workforceapplication.dto.PredictionRecord;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CLPredictionService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${prediction.csv.path}")
+    private String predictionCsvPath;
 
-    public String predict(MultipartFile file) throws IOException {
+    public List<PredictionRecord> getPredictions()
+            throws IOException, CsvValidationException {
 
-        HttpEntity<MultiValueMap<String, Object>> request = createRequest(file);
+        List<PredictionRecord> predictions = new ArrayList<>();
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "http://localhost:5233/predict",
-                request,
-                String.class
-        );
+        try (CSVReader reader = new CSVReader(new FileReader(predictionCsvPath))) {
 
-        return response.getBody();
+            // Skip Header
+            reader.readNext();
+
+            System.out.println("Working Directory: " + System.getProperty("user.dir"));
+            System.out.println("Prediction CSV Path: " + predictionCsvPath);
+
+            String[] row;
+
+            while ((row = reader.readNext()) != null) {
+
+
+                PredictionRecord record = new PredictionRecord();
+
+                record.setAttendanceDate(row[16]);
+                record.setDepartment(row[5]);
+                record.setTeam(row[10]);
+                record.setShift(row[21]);
+
+                record.setDayOfWeek(Integer.parseInt(row[17]));
+                record.setMonth(Integer.parseInt(row[18]));
+                record.setQuarter(Integer.parseInt(row[19]));
+                record.setYear(Integer.parseInt(row[20]));
+
+                record.setProductivityScore(parseDouble(row[31], "ProductivityScore"));
+                record.setUtilizationRate(parseDouble(row[36], "UtilizationRate"));
+                record.setCapacityUtilization(parseDouble(row[37], "CapacityUtilization"));
+                record.setEfficiencyScore(parseDouble(row[38], "EfficiencyScore"));
+
+                record.setCurrentCapacity(parseDouble(row[44], "CurrentCapacity"));
+                record.setRequiredCapacity(parseDouble(row[45], "RequiredCapacity"));
+                record.setAvailableHeadroom(parseDouble(row[46], "AvailableHeadroom"));
+                record.setCapacityLoad(parseDouble(row[47], "CapacityLoad"));
+
+                record.setPeakUtilization(parseDouble(row[48], "PeakUtilization"));
+                record.setScalingEvents(parseDouble(row[49], "ScalingEvents"));
+
+                record.setHistoricalDemand(parseDouble(row[55], "HistoricalDemand"));
+                record.setWorkforceDemand(parseDouble(row[56], "WorkforceDemand"));
+
+                record.setWorkforceStatus(row[57]);
+
+                // Last column = PredictedDemand
+                record.setPredictedDemand(
+                        parseDouble(row[row.length - 1], "PredictedDemand")
+                );
+
+                predictions.add(record);
+            }
+        }
+
+        return predictions;
     }
 
-    private HttpEntity<MultiValueMap<String, Object>> createRequest(MultipartFile file) throws IOException {
+    /**
+     * Debug parser to identify the exact column causing errors.
+     */
+    private double parseDouble(String value, String field) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException ex) {
 
-        ByteArrayResource resource = new ByteArrayResource(file.getBytes()) {
-            @Override
-            public String getFilename() {
-                return file.getOriginalFilename();
-            }
-        };
+            System.out.println("=====================================");
+            System.out.println("ERROR PARSING FIELD");
+            System.out.println("Field : " + field);
+            System.out.println("Value : " + value);
+            System.out.println("=====================================");
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", resource);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        return new HttpEntity<>(body, headers);
+            throw new RuntimeException(
+                    "Failed parsing field '" + field + "' with value '" + value + "'",
+                    ex
+            );
+        }
     }
 }

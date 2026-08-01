@@ -1,8 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 import os
 import shutil
+import traceback
 
 from training.training_service import TrainingService
+from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/train", tags=["Training"])
 
@@ -45,5 +47,23 @@ async def train_model(file: UploadFile = File(...), algorithms: str = Form(...))
 
         return result
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        print("\n========== FULL ERROR ==========")
+        traceback.print_exc()
+        print("================================\n")
+        raise HTTPException(
+            status_code=500, detail="Training failed. Check server logs."
+        )
+
+
+@router.get("/cleaned-dataset")
+async def download_cleaned_dataset():
+
+    file_path = "results/cleaned_dataset.csv"
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Cleaned dataset not found.")
+
+    return FileResponse(
+        path=file_path, filename="cleaned_dataset.csv", media_type="text/csv"
+    )

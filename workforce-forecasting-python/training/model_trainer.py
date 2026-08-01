@@ -10,14 +10,26 @@ from evaluation.evaluation import evaluate_model
 
 class ModelTrainer:
 
-    def train_models(self, selected_models, X_train, X_test, y_train, y_test, lstm_df):
+    def train_models(
+        self,
+        selected_models,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        lstm_df,
+    ):
 
         results = []
         trained_models = {}
 
-        # ===========================================
+        # Default values
+        X_dashboard = None
+        target_scaler = None
+
+        # ======================================================
         # LINEAR REGRESSION
-        # ===========================================
+        # ======================================================
 
         if "Linear Regression" in selected_models:
 
@@ -27,15 +39,24 @@ class ModelTrainer:
 
             predictions = lr_model.predict(X_test)
 
-            metrics = evaluate_model(y_test, predictions, "Linear Regression")
+            metrics = evaluate_model(
+                y_test,
+                predictions,
+                "Linear Regression",
+            )
 
             results.append(metrics)
 
-            trained_models["Linear Regression"] = lr_model
+            trained_models["Linear Regression"] = {
+                "type": "ml",
+                "model": lr_model,
+                "dashboard_data": None,
+                "target_scaler": None,
+            }
 
-        # ===========================================
+        # ======================================================
         # RANDOM FOREST
-        # ===========================================
+        # ======================================================
 
         if "Random Forest" in selected_models:
 
@@ -45,15 +66,24 @@ class ModelTrainer:
 
             predictions = rf_model.predict(X_test)
 
-            metrics = evaluate_model(y_test, predictions, "Random Forest")
+            metrics = evaluate_model(
+                y_test,
+                predictions,
+                "Random Forest",
+            )
 
             results.append(metrics)
 
-            trained_models["Random Forest"] = rf_model
+            trained_models["Random Forest"] = {
+                "type": "ml",
+                "model": rf_model,
+                "dashboard_data": None,
+                "target_scaler": None,
+            }
 
-        # ===========================================
+        # ======================================================
         # XGBOOST
-        # ===========================================
+        # ======================================================
 
         if "XGBoost" in selected_models:
 
@@ -63,15 +93,22 @@ class ModelTrainer:
 
             predictions = xgb_model.predict(X_test)
 
-            metrics = evaluate_model(y_test, predictions, "XGBoost")
+            metrics = evaluate_model(
+                y_test,
+                predictions,
+                "XGBoost",
+            )
 
             results.append(metrics)
 
-            trained_models["XGBoost"] = xgb_model
+            trained_models["XGBoost"] = {
+                "type": "ml",
+                "model": xgb_model,
+            }
 
-        # ===========================================
+        # ======================================================
         # LSTM
-        # ===========================================
+        # ======================================================
 
         if "LSTM" in selected_models:
 
@@ -82,22 +119,43 @@ class ModelTrainer:
                 X_test_lstm,
                 y_train_lstm,
                 y_test_lstm,
+                X_dashboard,
                 target_scaler,
                 test_departments,
             ) = prepare_lstm_data(lstm_df)
 
-            lstm_model, history = train_lstm(X_train_lstm, y_train_lstm)
+            lstm_model, history = train_lstm(
+                X_train_lstm,
+                y_train_lstm,
+            )
 
-            predictions = lstm_model.predict(X_test_lstm)
+            predictions = lstm_model.predict(
+                X_test_lstm,
+                verbose=0,
+            )
 
             predictions = target_scaler.inverse_transform(predictions)
 
             y_actual = target_scaler.inverse_transform(y_test_lstm.reshape(-1, 1))
 
-            metrics = evaluate_model(y_actual.flatten(), predictions.flatten(), "LSTM")
+            metrics = evaluate_model(
+                y_actual.flatten(),
+                predictions.flatten(),
+                "LSTM",
+            )
 
             results.append(metrics)
 
-            trained_models["LSTM"] = lstm_model
+            trained_models["LSTM"] = {
+                "type": "lstm",
+                "model": lstm_model,
+                "dashboard_data": X_dashboard,
+                "target_scaler": target_scaler,
+            }
 
-        return results, trained_models
+        return (
+            results,
+            trained_models,
+            X_dashboard,
+            target_scaler,
+        )
