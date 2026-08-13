@@ -1,25 +1,19 @@
 package com.boostphysioclinic.workforceapplication.controller;
 
-import com.boostphysioclinic.workforceapplication.dto.PredictionRecord;
-import com.boostphysioclinic.workforceapplication.service.CLPredictionService;
-import com.opencsv.exceptions.CsvValidationException;
+import com.boostphysioclinic.workforceapplication.dto.DashboardDataDTO;
+import com.boostphysioclinic.workforceapplication.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
     @Autowired
-    private CLPredictionService predictionCsvService;
+    private DashboardService dashboardService;
 
-    @GetMapping("/predictions")
-    public List<PredictionRecord> getPredictions()
-            throws IOException, CsvValidationException {
-
-        return predictionCsvService.getPredictions();
+    @GetMapping
+    public DashboardDataDTO getDashboardData() {
+        return dashboardService.getDashboardData();
     }
 }
