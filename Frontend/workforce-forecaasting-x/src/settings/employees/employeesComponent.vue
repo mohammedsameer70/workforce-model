@@ -63,7 +63,7 @@
                 <div style="font-weight: 600">
                   {{ data.name }}
                 </div>
-                <small>{{ data.id }}</small>
+                <small>{{ data.employeeId }}</small>
               </div>
             </div>
           </template>
@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -134,124 +134,42 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
 import { lbl } from '@/assets/constants/labels'
+import EmployeesService from './employeesService'
+import type { EmployeeDTO } from './employeesService'
 
 const search = ref('')
-const selectedDepartment = ref(null)
-const selectedStatus = ref(null)
+const selectedDepartment = ref<string | null>(null)
+const selectedStatus = ref<string | null>(null)
+const departments = ref(['Inbound', 'Outbound', 'Packing', 'Returns', 'Sortation', 'Quality Control'])
+const statuses = ref(['Active', 'Leave'])
+const employees = ref<EmployeeDTO[]>([])
+const loading = ref(false)
+const error = ref('')
 
-const departments = ['Inbound', 'Outbound', 'Packing', 'Returns', 'Sortation', 'Quality Control']
+const loadEmployees = async () => {
+  loading.value = true
+  error.value = ''
 
-const statuses = ['Active', 'Leave']
+  try {
+    employees.value = await EmployeesService.getEmployees()
+  } catch (err) {
+    console.error('Failed to load employees', err)
+    error.value = 'Unable to load employees.'
+  } finally {
+    loading.value = false
+  }
+}
 
-const employees = ref([
-  {
-    id: 'EMP-1001',
-    name: 'James Wilson',
-    department: 'Returns',
-    role: 'QC Inspector',
-    shift: 'Morning (06:00-14:00)',
-    utilization: 84,
-    attendance: 89,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1002',
-    name: 'Sarah Chen',
-    department: 'Outbound',
-    role: 'Forklift Operator',
-    shift: 'Night (22:00-06:00)',
-    utilization: 60,
-    attendance: 87,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1003',
-    name: 'Marcus Johnson',
-    department: 'Inbound',
-    role: 'Picker',
-    shift: 'Morning (06:00-14:00)',
-    utilization: 65,
-    attendance: 87,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1004',
-    name: 'Emily Davis',
-    department: 'Returns',
-    role: 'QC Inspector',
-    shift: 'Night (22:00-06:00)',
-    utilization: 71,
-    attendance: 86,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1005',
-    name: 'David Brown',
-    department: 'Outbound',
-    role: 'Team Lead',
-    shift: 'Morning (06:00-14:00)',
-    utilization: 78,
-    attendance: 90,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1006',
-    name: 'Lisa Wang',
-    department: 'Packing',
-    role: 'Packer',
-    shift: 'Afternoon (14:00-22:00)',
-    utilization: 72,
-    attendance: 86,
-    status: 'Leave',
-  },
-  {
-    id: 'EMP-1007',
-    name: 'Robert Taylor',
-    department: 'Inbound',
-    role: 'Team Lead',
-    shift: 'Night (22:00-06:00)',
-    utilization: 94,
-    attendance: 91,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1008',
-    name: 'Anna Martinez',
-    department: 'Outbound',
-    role: 'Packer',
-    shift: 'Afternoon (14:00-22:00)',
-    utilization: 93,
-    attendance: 88,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1009',
-    name: 'Michael Lee',
-    department: 'Sortation',
-    role: 'Packer',
-    shift: 'Morning (06:00-14:00)',
-    utilization: 84,
-    attendance: 93,
-    status: 'Active',
-  },
-  {
-    id: 'EMP-1010',
-    name: 'Jennifer White',
-    department: 'Quality Control',
-    role: 'Packer',
-    shift: 'Morning (06:00-14:00)',
-    utilization: 87,
-    attendance: 89,
-    status: 'Active',
-  },
-])
+onMounted(() => {
+  loadEmployees()
+})
 
 const filteredEmployees = computed(() => {
   return employees.value.filter((employee) => {
     const matchesSearch =
       !search.value ||
       employee.name.toLowerCase().includes(search.value.toLowerCase()) ||
-      employee.id.toLowerCase().includes(search.value.toLowerCase())
+      employee.employeeId.toLowerCase().includes(search.value.toLowerCase())
 
     const matchesDepartment =
       !selectedDepartment.value || employee.department === selectedDepartment.value
@@ -268,11 +186,11 @@ const metrics = computed(() => {
   const active = employees.value.filter((e) => e.status === 'Active').length
 
   const avgUtilization = Math.round(
-    employees.value.reduce((sum, e) => sum + e.utilization, 0) / total,
+    employees.value.reduce((sum, e) => sum + (e.utilization ?? 0), 0) / Math.max(total, 1),
   )
 
   const avgAttendance = Math.round(
-    employees.value.reduce((sum, e) => sum + e.attendance, 0) / total,
+    employees.value.reduce((sum, e) => sum + Number(e.attendance ?? 0), 0) / Math.max(total, 1),
   )
 
   return [

@@ -1,38 +1,20 @@
 <script setup lang="ts">
-import { computed, ref, provide, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import sideBarComponent from '@/sideBar/sideBarComponent.vue'
 import topMenuBarComponent from '@/component/topMenuBarComponent.vue'
 
 const route = useRoute()
-const isDarkMode = ref(
-  localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : true,
-)
+// Default light theme only; removed dark-mode toggle
 const showSidebar = computed(() => {
   return route.name !== 'homeSettings'
 })
 
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value
-  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
-}
-
-// Provide theme to all child components
-provide('isDarkMode', isDarkMode)
-provide('toggleTheme', toggleTheme)
-
-// Watch for theme changes and update document
-watch(
-  isDarkMode,
-  (newValue) => {
-    document.documentElement.setAttribute('data-theme', newValue ? 'dark' : 'light')
-  },
-  { immediate: true },
-)
+// note: dark mode support removed — app defaults to light styles
 </script>
 
 <template>
-  <div class="app-wrapper" :data-theme="isDarkMode ? 'dark' : 'light'">
+  <div class="app-wrapper">
     <topMenuBarComponent v-if="showSidebar" class="top-bar" />
 
     <div class="layout">
@@ -71,14 +53,6 @@ watch(
   width: 100%;
   height: 100vh;
   overflow: hidden;
-}
-
-.app-wrapper[data-theme='dark'] {
-  background-color: #0f1419;
-}
-
-.app-wrapper[data-theme='light'] {
-  background-color: #ffffff;
 }
 
 .top-bar {
@@ -159,5 +133,16 @@ watch(
 
 .content::-webkit-scrollbar-thumb:hover {
   background: #5a6578;
+}
+:root {
+    --app-bg: #ffffff;
+    --content-bg: #f8fafc;
+    --text-color: #1f2937;
+}
+
+.dark {
+    --app-bg: #0f172a;
+    --content-bg: #111827;
+    --text-color: #f8fafc;
 }
 </style>

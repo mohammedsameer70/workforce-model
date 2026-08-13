@@ -19,6 +19,13 @@
       <SelectButton v-model="selectedTab" :options="tabs" />
     </div>
 
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading notifications...</div>
+      </div>
+    </div>
+
     <!-- Notification List -->
     <div class="notificationPanel">
       <div v-for="item in filteredNotifications" :key="item.title" class="notificationItem">
@@ -47,83 +54,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import SelectButton from 'primevue/selectbutton'
+import NotificationService from './notificationService'
+import type { NotificationDTO } from './notificationService'
 
 const selectedTab = ref('All')
-
 const tabs = ['All', 'Unread', 'Critical', 'Warnings', 'Info']
+const notifications = ref<NotificationDTO[]>([])
+const loading = ref(false)
+const error = ref('')
 
-const notifications = ref([
-  {
-    title: 'Staffing Shortage Alert',
-    message:
-      'Outbound department understaffed by 12 workers for afternoon shift. Immediate action required.',
-    type: 'critical',
-    unread: true,
-    time: '2 min ago',
-    icon: 'pi pi-exclamation-triangle',
-  },
-  {
-    title: 'High CPU Usage',
-    message: 'Analytics-engine service CPU usage above 65% threshold. Auto-scaling triggered.',
-    type: 'warning',
-    unread: true,
-    time: '8 min ago',
-    icon: 'pi pi-clock',
-  },
-  {
-    title: 'Model Deployed',
-    message: 'ML model LSTM v3.2 deployed successfully. Forecast accuracy improved to 94.2%.',
-    type: 'success',
-    unread: true,
-    time: '15 min ago',
-    icon: 'pi pi-check-circle',
-  },
-  {
-    title: 'Overtime Projection',
-    message: 'Projected overtime breach for Packing department. 14:00–22:00 shift.',
-    type: 'warning',
-    unread: false,
-    time: '22 min ago',
-    icon: 'pi pi-clock',
-  },
-  {
-    title: 'Optimization Complete',
-    message: 'Shift optimization completed for next 7-day window. Recommendations generated.',
-    type: 'info',
-    unread: false,
-    time: '35 min ago',
-    icon: 'pi pi-info-circle',
-  },
-  {
-    title: 'Night Shift Coverage',
-    message: 'Night shift coverage at 68%. Below minimum threshold.',
-    type: 'critical',
-    unread: false,
-    time: '1 hour ago',
-    icon: 'pi pi-exclamation-triangle',
-  },
-  {
-    title: 'Benchmark Completed',
-    message: 'Load test completed. P99 latency below 200ms.',
-    type: 'info',
-    unread: false,
-    time: '2 hours ago',
-    icon: 'pi pi-info-circle',
-  },
-  {
-    title: 'Report Ready',
-    message: 'Weekly Workforce Demand Report generated and ready for download.',
-    type: 'success',
-    unread: false,
-    time: '3 hours ago',
-    icon: 'pi pi-check-circle',
-  },
-])
+const loadNotifications = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    notifications.value = await NotificationService.getNotifications()
+  } catch (err) {
+    console.error('Failed to load notifications', err)
+    error.value = 'Unable to load notifications.'
+  } finally {
+    loading.value = false
+  }
+}
 
 const filteredNotifications = computed(() => {
   switch (selectedTab.value) {
@@ -143,6 +100,8 @@ const filteredNotifications = computed(() => {
       return notifications.value
   }
 })
+
+onMounted(loadNotifications)
 </script>
 
 <style scoped src="./notificationComponent.css"></style>

@@ -7,6 +7,13 @@
     </div>
 
     <!-- KPI CARDS -->
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading benchmark data...</div>
+      </div>
+    </div>
+
     <div class="metricsGrid">
       <div class="metricCard" v-for="metric in metrics" :key="metric.title">
         <div class="cardHeader">
@@ -37,7 +44,15 @@
         </div>
       </template>
 
+      <div v-if="loading" class="page-loading-overlay">
+        <div class="page-loading-panel">
+          <div class="page-loading-spinner"></div>
+          <div>Loading benchmark charts...</div>
+        </div>
+      </div>
+
       <Chart
+        v-else
         type="line"
         :data="latencyChartData"
         :options="lineChartOptions"
@@ -108,231 +123,112 @@
 import { ref, onMounted } from 'vue'
 import Panel from 'primevue/panel'
 import Chart from 'primevue/chart'
+import BenchmarkService from './benchmarkService'
+import type {
+  BenchmarkMetricDTO,
+  LatencyPointDTO,
+  VersionHistoryDTO,
+  ExperimentDTO,
+} from './benchmarkService'
 
-const latencyChartData = ref()
-const versionChartData = ref()
+const metrics = ref<BenchmarkMetricDTO[]>([])
+const latencyChartData = ref<any>({ labels: [], datasets: [] })
+const versionChartData = ref<any>({ labels: [], datasets: [] })
+const lineChartOptions = ref<any>({})
+const barChartOptions = ref<any>({})
+const experiments = ref<ExperimentDTO[]>([])
+const loading = ref(false)
+const error = ref('')
 
-const lineChartOptions = ref()
-const barChartOptions = ref()
+const loadBenchmarkData = async () => {
+  loading.value = true
+  error.value = ''
 
-const metrics = ref([
-  {
-    value: '47',
-    title: 'Total Experiments',
-    trend: '+8.2%',
-    type: 'positive',
-    icon: 'pi pi-flask',
-  },
-  {
-    value: '62ms',
-    title: 'Avg P95 Latency',
-    trend: '-15.3%',
-    type: 'negative',
-    icon: 'pi pi-clock',
-  },
-  {
-    value: '4,850/s',
-    title: 'Max Throughput',
-    trend: '+12.5%',
-    type: 'positive',
-    icon: 'pi pi-chart-line',
-  },
-  {
-    value: '67%',
-    title: 'CPU Under Load',
-    trend: '+3.2%',
-    type: 'warning',
-    icon: 'pi pi-cog',
-  },
-])
+  try {
+    const [metricResponse, latencyResponse, versionResponse, experimentResponse] =
+      await Promise.all([
+        BenchmarkService.getMetrics(),
+        BenchmarkService.getLatencySeries(),
+        BenchmarkService.getVersionHistory(),
+        BenchmarkService.getExperiments(),
+      ])
 
-const experiments = ref([
-  {
-    id: 'EXP-001',
-    title: 'LSTM vs XGBoost Accuracy',
-    result: 'LSTM +2.4% accuracy',
-    status: 'completed',
-    date: '2024-01-15',
-    duration: '4h 23m',
-  },
-  {
-    id: 'EXP-002',
-    title: 'Load Test: 5000 Concurrent',
-    result: 'P95 < 200ms achieved',
-    status: 'completed',
-    date: '2024-01-14',
-    duration: '1h 45m',
-  },
-  {
-    id: 'EXP-003',
-    title: 'Spring Boot vs Node.js API',
-    result: 'In Progress',
-    status: 'running',
-    date: '2024-01-15',
-    duration: '2h 10m',
-  },
-  {
-    id: 'EXP-004',
-    title: 'DB Query Optimization',
-    result: '35% latency reduction',
-    status: 'completed',
-    date: '2024-01-13',
-    duration: '45m',
-  },
-  {
-    id: 'EXP-005',
-    title: 'Horizontal Scaling Test',
-    result: 'Pending',
-    status: 'queued',
-    date: '2024-01-12',
-    duration: '--',
-  },
-])
+    metrics.value = metricResponse
+    latencyChartData.value = buildLatencyChart(latencyResponse)
+    versionChartData.value = buildVersionChart(versionResponse)
+    experiments.value = experimentResponse
+  } catch (err) {
+    console.error('Failed to load benchmark data', err)
+    error.value = 'Unable to load benchmark data.'
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
-  latencyChartData.value = buildLatencyChart()
-  versionChartData.value = buildVersionChart()
-
+  loadBenchmarkData()
   lineChartOptions.value = buildLineOptions()
   barChartOptions.value = buildBarOptions()
 })
 
-const buildLatencyChart = () => {
-  return {
-    labels: ['50', '100', '200', '500', '1000', '2000', '3000', '5000'],
-
-    datasets: [
-      {
-        label: 'P50 (ms)',
-        borderColor: '#00B2FF',
-        backgroundColor: '#00B2FF',
-        tension: 0.4,
-        data: [20, 20, 20, 28, 35, 40, 48, 70],
-      },
-
-      {
-        label: 'P95 (ms)',
-        borderColor: '#F59E0B',
-        backgroundColor: '#F59E0B',
-        tension: 0.4,
-        data: [45, 50, 35, 65, 52, 78, 105, 150],
-      },
-
-      {
-        label: 'P99 (ms)',
-        borderColor: '#FF2E88',
-        backgroundColor: '#FF2E88',
-        tension: 0.4,
-        data: [95, 78, 108, 80, 130, 128, 170, 250],
-      },
-    ],
-  }
-}
-const buildVersionChart = () => {
-  return {
-    labels: ['v1.0', 'v1.5', 'v2.0', 'v2.5', 'v3.0', 'v3.2'],
-
-    datasets: [
-      {
-        label: 'Throughput (req/s)',
-        backgroundColor: '#00B2FF',
-        borderRadius: 8,
-        data: [3200, 4700, 2500, 4200, 4800, 4900],
-      },
-    ],
-  }
-}
-
-const buildLineOptions = () => {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-
-    interaction: {
-      mode: 'index',
-      intersect: false,
+const buildLatencyChart = (items: LatencyPointDTO[]) => ({
+  labels: items.map((item) => item.label),
+  datasets: [
+    {
+      label: 'P50 (ms)',
+      borderColor: '#00B2FF',
+      backgroundColor: '#00B2FF',
+      tension: 0.4,
+      data: items.map((item) => item.value),
     },
+  ],
+})
 
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#64748B',
-          usePointStyle: true,
-          pointStyle: 'circle',
-        },
-      },
+const buildVersionChart = (items: VersionHistoryDTO[]) => ({
+  labels: items.map((item) => item.label),
+  datasets: [
+    {
+      label: 'Throughput (req/s)',
+      backgroundColor: '#00B2FF',
+      borderRadius: 8,
+      data: items.map((item) => item.throughput),
     },
+  ],
+})
 
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Concurrent Users',
-          color: '#64748B',
-        },
-        ticks: {
-          color: '#64748B',
-        },
-        grid: {
-          color: 'rgba(148,163,184,.08)',
-        },
-      },
-
-      y: {
-        title: {
-          display: true,
-          text: 'Latency (ms)',
-          color: '#64748B',
-        },
-        ticks: {
-          color: '#64748B',
-        },
-        grid: {
-          color: 'rgba(148,163,184,.08)',
-        },
-      },
+const buildLineOptions = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: { color: '#64748B', usePointStyle: true, pointStyle: 'circle' },
     },
-  }
-}
+  },
+  scales: {
+    x: { ticks: { color: '#64748B' }, grid: { color: 'rgba(148,163,184,.08)' } },
+    y: { ticks: { color: '#64748B' }, grid: { color: 'rgba(148,163,184,.08)' } },
+  },
+})
 
-const buildBarOptions = () => {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#64748B',
-          usePointStyle: true,
-          pointStyle: 'circle',
-        },
-      },
+const buildBarOptions = () => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: { color: '#64748B', usePointStyle: true, pointStyle: 'circle' },
     },
-
-    scales: {
-      x: {
-        ticks: {
-          color: '#64748B',
-        },
-        grid: {
-          display: false,
-        },
-      },
-
-      y: {
-        ticks: {
-          color: '#64748B',
-        },
-        grid: {
-          color: 'rgba(148,163,184,.08)',
-        },
-      },
-    },
-  }
-}
+  },
+  scales: {
+    x: { ticks: { color: '#64748B' }, grid: { display: false } },
+    y: { ticks: { color: '#64748B' }, grid: { color: 'rgba(148,163,184,.08)' } },
+  },
+})
 </script>
 
 <style scoped src="./benchmarkComponent.css"></style>

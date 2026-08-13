@@ -25,6 +25,7 @@ import ProgressBar from 'primevue/progressbar'
 /* ChartJS */
 import {
   Chart as ChartJS,
+  LineController,
   LineElement,
   BarElement,
   BarController,
@@ -45,6 +46,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import '@/assets/styles/main.css'
 
 ChartJS.register(
+  LineController,
   LineElement,
   BarElement,
   BarController,
@@ -60,10 +62,14 @@ ChartJS.register(
 const app = createApp(App)
 
 /* PrimeVue */
+
 app.use(PrimeVue, {
   theme: {
     preset: Aura,
-  },
+    options: {
+      darkModeSelector: '.dark'
+    }
+  }
 })
 
 /* Router */

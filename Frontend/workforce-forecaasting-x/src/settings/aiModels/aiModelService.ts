@@ -39,6 +39,27 @@ class AIModelService {
     );
     return response.data;
     }
+
+    async getLatestPrediction() {
+        const response = await axios.get(
+            "http://localhost:5233/api/predict/latest"
+        );
+        return response.data;
+    }
+
+    async getLatestModel() {
+        const response = await axios.get(
+            "http://localhost:5233/api/train/latest-model"
+        );
+        return response.data;
+    }
+
+    async getModelComparisons() {
+        const response = await axios.get(
+            "http://localhost:5233/api/train/model-comparisons"
+        );
+        return response.data;
+    }
 }
 
 export default new AIModelService();

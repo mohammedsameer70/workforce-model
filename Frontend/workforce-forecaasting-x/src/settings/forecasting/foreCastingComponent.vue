@@ -16,16 +16,32 @@
     </div>
   </div>
 
-  <SelectButton
-    v-model="r_selectTab"
-    :options="options"
-    optionLabel="label"
-    optionValue="value"
-    fluid
-  />
+  <div class="forecasting-tabbar">
+    <SelectButton
+      v-model="r_selectTab"
+      :options="options"
+      optionLabel="label"
+      optionValue="value"
+      fluid
+      :disabled="!canToggleTabs"
+      :unselectable="false"
+    />
+    <div v-if="!canToggleTabs" class="forecasting-tabbar-help">
+      <small>
+        Forecast tabs are disabled until the AI model has finished training and data is loaded.
+      </small>
+    </div>
+  </div>
+
+  <div v-if="loading" class="page-loading-overlay">
+    <div class="page-loading-panel">
+      <div class="page-loading-spinner"></div>
+      <div>Loading forecasting charts and data...</div>
+    </div>
+  </div>
 
   <!-- 24 HOURS FORECAST -->
-  <Panel v-if="r_selectTab === 0" :header="lbl.HourlyDemandPrediction" class="mb-4">
+  <Panel v-show="r_selectTab === 0" :header="lbl.HourlyDemandPrediction" class="mb-4">
     <div class="departmentSection">
       <div class="chartCard">
         <Chart
@@ -40,7 +56,7 @@
   </Panel>
 
   <!-- WEEKLY FORECAST -->
-  <Panel v-if="r_selectTab === 1" header="Department Performance" class="mb-4">
+  <Panel v-show="r_selectTab === 1" header="Department Performance" class="mb-4">
     <div class="departmentSection">
       <div class="chartCard">
         <Chart
@@ -53,6 +69,56 @@
       </div>
     </div>
   </Panel>
+
+  <!-- ADD SHIFT ALLOCATION -->
+  <div class="shift-allocation-panel">
+    <div class="shift-allocation-header">
+      <h3>Add Shift Allocation</h3>
+      <p class="small-muted">Quickly add staffing for a department/time slot</p>
+    </div>
+
+    <div class="shift-allocation-grid">
+      <label>
+        Department
+        <select v-model="sa_department">
+          <option disabled value="">Select department</option>
+          <option v-for="d in staffingData" :key="d.department" :value="d.department">{{ d.department }}</option>
+        </select>
+      </label>
+
+      <label>
+        Time Slot
+        <select v-model="sa_timeSlot">
+          <option value="Morning">Morning</option>
+          <option value="Afternoon">Afternoon</option>
+          <option value="Night">Night</option>
+        </select>
+      </label>
+
+      <label>
+        Day of Week
+        <select v-model="sa_day">
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+          <option value="Friday">Friday</option>
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+        </select>
+      </label>
+
+      <label>
+        Staffing Level
+        <input type="number" min="0" v-model.number="sa_level" />
+      </label>
+
+      <div class="shift-allocation-actions">
+        <button class="btn btn-secondary" @click="resetShiftForm">Reset</button>
+        <button class="btn btn-primary" @click="addShiftAllocation">Add Allocation</button>
+      </div>
+    </div>
+  </div>
 
   <!-- STAFFING TABLE -->
   <div class="flex flex-row w-full">
@@ -105,7 +171,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 import Chart from 'primevue/chart'
 import Panel from 'primevue/panel'
@@ -114,6 +180,14 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 
 import { lbl } from '@/assets/constants/labels'
+import { aiModelReady } from '@/state/aiModelGate'
+import ForecastingService from './forecastingService'
+import type {
+  ForecastMetricDTO,
+  ForecastTrendDTO,
+  WeeklyForecastDTO,
+  StaffingHeatmapDTO,
+} from './forecastingService'
 
 import {
   Chart as ChartJS,
@@ -151,117 +225,165 @@ const options = [
   },
 ]
 
-const chartData = ref()
-const chartOptions = ref()
+const metrics = ref<ForecastMetricDTO[]>([])
+const chartData = ref<any>({ labels: [], datasets: [] })
+const chartOptions = ref<any>({})
+const barChartData = ref<any>({ labels: [], datasets: [] })
+const barChartOptions = ref<any>({})
+const radarChartData = ref<any>({ labels: [], datasets: [] })
+const radarChartOptions = ref<any>({})
+const staffingData = ref<StaffingHeatmapDTO[]>([])
+const loading = ref(true)
+const error = ref('')
 
-const barChartData = ref()
-const barChartOptions = ref()
+// Shift allocation form state
+const sa_department = ref('')
+const sa_timeSlot = ref('Morning')
+const sa_day = ref('Monday')
+const sa_level = ref(0)
 
-const radarChartData = ref()
-const radarChartOptions = ref()
+const resetShiftForm = () => {
+  sa_department.value = ''
+  sa_timeSlot.value = 'Morning'
+  sa_day.value = 'Monday'
+  sa_level.value = 0
+}
+
+const addShiftAllocation = () => {
+  if (!sa_department.value) return
+
+  // Find or create department row
+  let row = staffingData.value.find((r: any) => r.department === sa_department.value)
+  if (!row) {
+    row = { department: sa_department.value, morning: 0, afternoon: 0, night: 0, total: 0 }
+    staffingData.value.push(row)
+  }
+
+  if (sa_timeSlot.value === 'Morning') row.morning = Number(sa_level.value)
+  else if (sa_timeSlot.value === 'Afternoon') row.afternoon = Number(sa_level.value)
+  else row.night = Number(sa_level.value)
+
+  row.total = (Number(row.morning) || 0) + (Number(row.afternoon) || 0) + (Number(row.night) || 0)
+
+  resetShiftForm()
+}
+
+const canToggleTabs = computed(() => !loading.value && aiModelReady.value)
+watch(r_selectTab, (val) => {
+  if (val === null || val === undefined) {
+    r_selectTab.value = 0
+  }
+})
+
+const loadForecastingData = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const [metricResponse, hourlyResponse, weeklyResponse, staffingResponse] = await Promise.all([
+      ForecastingService.getForecastMetrics(),
+      ForecastingService.getHourlyForecast(),
+      ForecastingService.getWeeklyPerformance(),
+      ForecastingService.getStaffingHeatmap(),
+    ])
+
+    console.debug('forecasting API responses', {
+      metricResponse,
+      hourlyResponse,
+      weeklyResponse,
+      staffingResponse,
+    })
+
+    metrics.value = metricResponse
+    chartData.value = buildLineChart(hourlyResponse)
+    barChartData.value = buildBarChart(weeklyResponse)
+    radarChartData.value = buildRadarChart(staffingResponse)
+    staffingData.value = staffingResponse
+  } catch (err) {
+    console.error('Failed to load forecasting data', err)
+    error.value = 'Unable to load forecasting data.'
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
-  chartData.value = setChartData()
+  loadForecastingData()
   chartOptions.value = setChartOptions()
-
-  barChartData.value = setBarChartData()
   barChartOptions.value = setBarChartOptions()
-
-  radarChartData.value = setRadarChartData()
   radarChartOptions.value = setRadarChartOptions()
 })
 
-const setRadarChartData = () => {
-  const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--p-text-color')
-
-  return {
-    labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
-    datasets: [
-      {
-        label: 'My First dataset',
-        borderColor: documentStyle.getPropertyValue('--p-gray-400'),
-        pointBackgroundColor: documentStyle.getPropertyValue('--p-gray-400'),
-        pointBorderColor: documentStyle.getPropertyValue('--p-gray-400'),
-        pointHoverBackgroundColor: textColor,
-        pointHoverBorderColor: documentStyle.getPropertyValue('--p-gray-400'),
-        data: [65, 59, 90, 81, 56, 55, 40],
-      },
-      {
-        label: 'My Second dataset',
-        borderColor: documentStyle.getPropertyValue('--p-pink-400'),
-        pointBackgroundColor: documentStyle.getPropertyValue('--p-pink-400'),
-        pointBorderColor: documentStyle.getPropertyValue('--p-pink-400'),
-        pointHoverBackgroundColor: textColor,
-        pointHoverBorderColor: documentStyle.getPropertyValue('--p-pink-400'),
-        data: [28, 48, 40, 19, 96, 27, 100],
-      },
-    ],
-  }
-}
-
-const setRadarChartOptions = () => {
-  const documentStyle = getComputedStyle(document.documentElement)
-  const textColor = documentStyle.getPropertyValue('--p-text-color')
-  const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color')
-
-  return {
-    plugins: {
-      legend: {
-        labels: {
-          color: textColor,
-        },
-      },
-    },
-    scales: {
-      r: {
-        grid: {
-          color: textColorSecondary,
-        },
-      },
-    },
-  }
-}
-
-const setChartData = () => {
+const buildLineChart = (items: ForecastTrendDTO[]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
   return {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+    labels: items.map((item) => item.date),
     datasets: [
       {
         label: 'Demand Forecast',
         fill: false,
         borderColor: documentStyle.getPropertyValue('--p-cyan-500'),
         tension: 0.4,
-        data: [65, 59, 80, 81, 56, 55, 10],
-      },
-      {
-        label: 'Actual Demand',
-        fill: false,
-        borderColor: documentStyle.getPropertyValue('--p-gray-500'),
-        tension: 0.4,
-        data: [28, 48, 40, 19, 86, 27, 90],
+        data: items.map((item) => item.predictedDemand),
       },
     ],
   }
 }
 
-const setBarChartData = () => {
+const buildBarChart = (items: WeeklyForecastDTO[]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
   return {
-    labels: ['Inbound', 'Outbound', 'Sortation', 'Packing', 'Returns', 'Quality'],
+    labels: items.map((item) => item.department),
     datasets: [
       {
         label: 'Performance',
         backgroundColor: documentStyle.getPropertyValue('--p-cyan-500'),
-        data: [65, 59, 80, 81, 56, 55],
+        data: items.map((item) => item.predictedDemand),
       },
       {
         label: 'Target',
         backgroundColor: documentStyle.getPropertyValue('--p-gray-500'),
-        data: [70, 70, 70, 70, 70, 70],
+        data: items.map((item) => item.actualDemand ?? 0),
+      },
+    ],
+  }
+}
+
+const buildRadarChart = (items: StaffingHeatmapDTO[]) => {
+  const documentStyle = getComputedStyle(document.documentElement)
+  const textColor = documentStyle.getPropertyValue('--p-text-color')
+
+  return {
+    labels: items.map((item) => item.department),
+    datasets: [
+      {
+        label: 'Morning',
+        borderColor: documentStyle.getPropertyValue('--p-gray-400'),
+        pointBackgroundColor: documentStyle.getPropertyValue('--p-gray-400'),
+        pointBorderColor: documentStyle.getPropertyValue('--p-gray-400'),
+        pointHoverBackgroundColor: textColor,
+        pointHoverBorderColor: documentStyle.getPropertyValue('--p-gray-400'),
+        data: items.map((item) => item.morning),
+      },
+      {
+        label: 'Afternoon',
+        borderColor: documentStyle.getPropertyValue('--p-pink-400'),
+        pointBackgroundColor: documentStyle.getPropertyValue('--p-pink-400'),
+        pointBorderColor: documentStyle.getPropertyValue('--p-pink-400'),
+        pointHoverBackgroundColor: textColor,
+        pointHoverBorderColor: documentStyle.getPropertyValue('--p-pink-400'),
+        data: items.map((item) => item.afternoon),
+      },
+      {
+        label: 'Night',
+        borderColor: documentStyle.getPropertyValue('--p-cyan-500'),
+        pointBackgroundColor: documentStyle.getPropertyValue('--p-cyan-500'),
+        pointBorderColor: documentStyle.getPropertyValue('--p-cyan-500'),
+        pointHoverBackgroundColor: textColor,
+        pointHoverBorderColor: documentStyle.getPropertyValue('--p-cyan-500'),
+        data: items.map((item) => item.night),
       },
     ],
   }
@@ -269,11 +391,8 @@ const setBarChartData = () => {
 
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
-
   const textColor = documentStyle.getPropertyValue('--p-text-color')
-
   const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color')
-
   const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color')
 
   return {
@@ -308,7 +427,6 @@ const setChartOptions = () => {
 
 const setBarChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
-
   const textColor = documentStyle.getPropertyValue('--p-text-color')
   const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color')
   const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color')
@@ -344,90 +462,28 @@ const setBarChartOptions = () => {
   }
 }
 
-const staffingData = ref([
-  {
-    department: 'Inbound',
-    morning: 22,
-    afternoon: 40,
-    night: 19,
-    total: 81,
-  },
-  {
-    department: 'Outbound',
-    morning: 33,
-    afternoon: 31,
-    night: 20,
-    total: 84,
-  },
-  {
-    department: 'Sortation',
-    morning: 38,
-    afternoon: 53,
-    night: 23,
-    total: 114,
-  },
-  {
-    department: 'Packing',
-    morning: 39,
-    afternoon: 52,
-    night: 28,
-    total: 119,
-  },
-])
+const setRadarChartOptions = () => {
+  const documentStyle = getComputedStyle(document.documentElement)
+  const textColor = documentStyle.getPropertyValue('--p-text-color')
+  const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color')
 
-const metrics = ref([
-  {
-    title: 'LSTM v3.2',
-    value: 'Active Model',
-    icon: 'pi pi-bolt',
-  },
-  {
-    title: '94.2%',
-    value: 'Accuracy (MAPE)',
-    icon: 'pi pi-bullseye',
-  },
-  {
-    title: '3.8',
-    value: 'RMSE Score',
-    icon: 'pi pi-chart-line',
-  },
-  {
-    title: '2,847',
-    value: 'Predictions Today',
-    icon: 'pi pi-microchip-ai',
-  },
-])
-
-const microservices = ref([
-  {
-    name: 'forecast-service',
-    instances: 3,
-    cpu: 34,
-    memory: 62,
-    status: 'healthy',
-  },
-  {
-    name: 'shift-optimizer',
-    instances: 2,
-    cpu: 28,
-    memory: 55,
-    status: 'healthy',
-  },
-  {
-    name: 'employee-service',
-    instances: 3,
-    cpu: 22,
-    memory: 48,
-    status: 'healthy',
-  },
-  {
-    name: 'analytics-engine',
-    instances: 2,
-    cpu: 67,
-    memory: 78,
-    status: 'warning',
-  },
-])
+  return {
+    plugins: {
+      legend: {
+        labels: {
+          color: textColor,
+        },
+      },
+    },
+    scales: {
+      r: {
+        grid: {
+          color: textColorSecondary,
+        },
+      },
+    },
+  }
+}
 </script>
 
 <style scoped src="./foreCastingComponent.css"></style>

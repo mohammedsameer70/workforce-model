@@ -9,6 +9,13 @@
     </div>
 
     <!-- KPI CARDS -->
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading capacity planning data...</div>
+      </div>
+    </div>
+
     <div class="metricsGrid">
       <div class="metricCard" v-for="metric in metrics" :key="metric.label">
         <div class="cardGlow"></div>
@@ -39,7 +46,17 @@
         </div>
       </template>
 
+      <template v-if="loading">
+        <div class="page-loading-overlay">
+          <div class="page-loading-panel">
+            <div class="page-loading-spinner"></div>
+            <div>Loading capacity planning charts...</div>
+          </div>
+        </div>
+      </template>
+
       <Chart
+        v-else
         type="line"
         :data="capacityChartData"
         :options="capacityChartOptions"
@@ -105,171 +122,118 @@
 import { ref, onMounted } from 'vue'
 import Chart from 'primevue/chart'
 import Panel from 'primevue/panel'
+import CapacityPlanningService from './capacityPlanningService'
+import type {
+  CapacityMetricDTO,
+  DepartmentCapacityDTO,
+  TimeSeriesDTO,
+  BenchmarkPointDTO,
+} from './capacityPlanningService'
 
-const metrics = ref([
-  {
-    value: '78.4%',
-    label: 'Capacity Load',
-    trend: '1.2%',
-    trendType: 'positive',
-    icon: 'pi pi-sync',
-  },
-  {
-    value: '92.1%',
-    label: 'Peak Utilization',
-    trend: '1.5%',
-    trendType: 'negative',
-    icon: 'pi pi-chart-line',
-  },
-  {
-    value: '21.6%',
-    label: 'Available Headroom',
-    trend: '3.1%',
-    trendType: 'positive',
-    icon: 'pi pi-database',
-  },
-  {
-    value: '4',
-    label: 'Scaling Events',
-    trend: '20%',
-    trendType: 'negative',
-    icon: 'pi pi-bolt',
-  },
-])
+const metrics = ref<CapacityMetricDTO[]>([])
+const departments = ref<DepartmentCapacityDTO[]>([])
+const capacityChartData = ref<any>({ labels: [], datasets: [] })
+const capacityChartOptions = ref<any>({})
+const benchmarkChartData = ref<any>({ labels: [], datasets: [] })
+const benchmarkChartOptions = ref<any>({})
+const loading = ref(false)
+const error = ref('')
 
-const departments = ref([
-  {
-    name: 'Inbound',
-    utilization: 94,
-    status: 'Critical',
-  },
-  {
-    name: 'Outbound',
-    utilization: 93,
-    status: 'Critical',
-  },
-  {
-    name: 'Sortation',
-    utilization: 87,
-    status: 'Critical',
-  },
-  {
-    name: 'Packing',
-    utilization: 64,
-    status: 'Optimal',
-  },
-  {
-    name: 'Returns',
-    utilization: 72,
-    status: 'Watch',
-  },
-  {
-    name: 'Quality Control',
-    utilization: 61,
-    status: 'Optimal',
-  },
-])
+const loadCapacityData = async () => {
+  loading.value = true
+  error.value = ''
 
-const capacityChartData = ref()
-const capacityChartOptions = ref()
+  try {
+    const [metricResponse, trendResponse, departmentsResponse, benchmarkResponse] =
+      await Promise.all([
+        CapacityPlanningService.getMetrics(),
+        CapacityPlanningService.getCapacityTrend(),
+        CapacityPlanningService.getDepartments(),
+        CapacityPlanningService.getBenchmark(),
+      ])
 
-const benchmarkChartData = ref()
-const benchmarkChartOptions = ref()
+    metrics.value = metricResponse
+    departments.value = departmentsResponse
+    capacityChartData.value = buildCapacityChart(trendResponse)
+    benchmarkChartData.value = buildBenchmarkChart(benchmarkResponse)
+  } catch (err) {
+    console.error('Failed to load capacity planning data', err)
+    error.value = 'Unable to load capacity planning data.'
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
-  capacityChartData.value = {
-    labels: [
-      'Day 1',
-      'Day 2',
-      'Day 3',
-      'Day 4',
-      'Day 5',
-      'Day 6',
-      'Day 7',
-      'Day 8',
-      'Day 9',
-      'Day 10',
-      'Day 11',
-      'Day 12',
-      'Day 13',
-      'Day 14',
-    ],
-    datasets: [
-      {
-        label: 'Utilization',
-        data: [82, 76, 88, 68, 75, 83, 67, 80, 83, 87, 81, 68, 68, 85],
-        borderColor: '#38bdf8',
-        backgroundColor: 'rgba(56,189,248,.15)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Capacity',
-        data: [84, 84, 89, 95, 94, 82, 94, 86, 84, 84, 92, 84, 84, 92],
-        borderColor: '#22c55e',
-        borderDash: [6, 6],
-        tension: 0.4,
-      },
-    ],
-  }
+  loadCapacityData()
+  capacityChartOptions.value = buildLineOptions()
+  benchmarkChartOptions.value = buildBarOptions()
+})
 
-  capacityChartOptions.value = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      legend: {
-        labels: {
-          color: '#94a3b8',
-        },
-      },
+const buildCapacityChart = (items: TimeSeriesDTO[]) => ({
+  labels: items.map((item) => item.label),
+  datasets: [
+    {
+      label: 'Utilization',
+      data: items.map((item) => item.utilization),
+      borderColor: '#38bdf8',
+      backgroundColor: 'rgba(56,189,248,.15)',
+      fill: true,
+      tension: 0.4,
     },
-    scales: {
-      x: {
-        ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(255,255,255,.05)' },
-      },
-      y: {
-        min: 0,
-        max: 100,
-        ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(255,255,255,.05)' },
-      },
+    {
+      label: 'Capacity',
+      data: items.map((item) => item.capacity),
+      borderColor: '#22c55e',
+      borderDash: [6, 6],
+      tension: 0.4,
     },
-  }
+  ],
+})
 
-  benchmarkChartData.value = {
-    labels: ['100', '200', '500', '1000', '2000', '5000'],
-    datasets: [
-      {
-        label: 'Avg Response (ms)',
-        backgroundColor: '#0ea5e9',
-        borderRadius: 8,
-        data: [22, 28, 42, 65, 94, 125],
-      },
-    ],
-  }
+const buildBenchmarkChart = (items: BenchmarkPointDTO[]) => ({
+  labels: items.map((item) => item.label),
+  datasets: [
+    {
+      label: 'Avg Response (ms)',
+      backgroundColor: '#0ea5e9',
+      borderRadius: 8,
+      data: items.map((item) => item.value),
+    },
+  ],
+})
 
-  benchmarkChartOptions.value = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      legend: {
-        labels: {
-          color: '#94a3b8',
-        },
-      },
+const buildLineOptions = () => ({
+  maintainAspectRatio: false,
+  responsive: true,
+  plugins: {
+    legend: {
+      labels: { color: '#94a3b8' },
     },
-    scales: {
-      x: {
-        ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(255,255,255,.05)' },
-      },
-      y: {
-        ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(255,255,255,.05)' },
-      },
+  },
+  scales: {
+    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.05)' } },
+    y: {
+      min: 0,
+      max: 100,
+      ticks: { color: '#94a3b8' },
+      grid: { color: 'rgba(255,255,255,.05)' },
     },
-  }
+  },
+})
+
+const buildBarOptions = () => ({
+  maintainAspectRatio: false,
+  responsive: true,
+  plugins: {
+    legend: {
+      labels: { color: '#94a3b8' },
+    },
+  },
+  scales: {
+    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.05)' } },
+    y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.05)' } },
+  },
 })
 </script>
 

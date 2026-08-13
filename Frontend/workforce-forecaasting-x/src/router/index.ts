@@ -11,6 +11,7 @@ import CapacityPlanningComponent from '@/settings/capacityPlanning/capacityPlann
 import MonitorComponent from '@/settings/monitor/monitorComponent.vue'
 import BenchmarkComponent from '@/settings/benchmark/benchmarkComponent.vue'
 import ReportComponent from '@/settings/reports/reportComponent.vue'
+import { aiModelReady } from '@/state/aiModelGate'
 import NotificationComponent from '@/settings/notification/notificationComponent.vue'
 import SetttingsComponent from '@/settings/settings/setttingsComponent.vue'
 const router = createRouter({
@@ -87,4 +88,14 @@ const router = createRouter({
     },
   ],
 })
+router.beforeEach((to, from, next) => {
+  const allowedPaths = [ROUTES.HOMESETTINGS, ROUTES.AI_MODELS]
+
+  if (!aiModelReady.value && !allowedPaths.includes(to.path)) {
+    return next(ROUTES.AI_MODELS)
+  }
+
+  next()
+})
+
 export default router

@@ -5,6 +5,7 @@ import { lbl } from '@/assets/constants/labels'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import { useRouter } from 'vue-router'
+import { aiModelReady } from '@/state/aiModelGate'
 
 export default defineComponent({
   components: { Card, InputText },
@@ -93,12 +94,25 @@ export default defineComponent({
       },
     ])
 
+    const settingsCards = computed(() =>
+      r_ArrHomeSettInfo.value.map((item) => ({
+        ...item,
+        disabled: !aiModelReady.value && item.key !== NConstants.SETTINGS.AI_MODELS,
+      })),
+    )
+
     const filteredSettings = computed(() => {
-      return r_ArrHomeSettInfo.value.filter((item) =>
+      return settingsCards.value.filter((item) =>
         item.value.toLowerCase().includes(searchText.value.toLowerCase()),
       )
     })
+
     function openSettings(setting: any) {
+      if (setting.disabled) {
+        alert('Please train or predict a model first to unlock the other modules.')
+        return
+      }
+
       switch (setting.key) {
         case NConstants.SETTINGS.DASHBOARD:
           router.push('/dashboard')
@@ -140,6 +154,8 @@ export default defineComponent({
       searchText,
       openSettings,
       filteredSettings,
+      aiModelReady,
+      NConstants,
     }
   },
 })
@@ -164,6 +180,7 @@ export default defineComponent({
         v-for="cardsItem in filteredSettings"
         :key="cardsItem.key"
         class="cardItems"
+        :class="{ disabled: !aiModelReady && cardsItem.key !== NConstants.SETTINGS.AI_MODELS }"
       >
         <template #header>
           <div class="cardHeader">

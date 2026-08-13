@@ -3,7 +3,7 @@
     <!-- HEADER -->
     <div class="dashboardHeader">
       <h1>Infrastructure Monitoring</h1>
-      <p>Real-time system health, latency tracking and microservice monitoring</p>
+      <p>Real-time system health and latency tracking</p>
     </div>
     <div class="cardsInfo">
       <div class="card" v-for="metric in metrics" :key="metric.title">
@@ -13,6 +13,13 @@
 
         <h3>{{ metric.title }}</h3>
         <p>{{ metric.value }}</p>
+      </div>
+    </div>
+
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading monitoring charts...</div>
       </div>
     </div>
 
@@ -27,7 +34,17 @@
         </div>
       </template>
 
+      <template v-if="loading">
+        <div class="page-loading-overlay">
+          <div class="page-loading-panel">
+            <div class="page-loading-spinner"></div>
+            <div>Loading infrastructure charts...</div>
+          </div>
+        </div>
+      </template>
+
       <Chart
+        v-else
         type="line"
         :data="infrastructureData"
         :options="lineChartOptions"
@@ -49,70 +66,7 @@
       <Chart type="line" :data="latencyData" :options="latencyOptions" style="height: 380px" />
     </Panel>
 
-    <!-- MICROSERVICE HEALTH -->
-    <Panel class="dashboardPanel">
-      <template #header>
-        <div class="panelHeader">
-          <div>
-            <h3>Microservice Health Matrix</h3>
-            <p>Current status and resource utilization</p>
-          </div>
-        </div>
-      </template>
-
-      <div class="serviceGrid">
-        <div v-for="service in services" :key="service.name" class="serviceCard">
-          <div class="serviceCardHeader">
-            <div class="serviceName">
-              <i
-                class="pi"
-                :class="
-                  service.status === 'healthy'
-                    ? 'pi-check-circle healthyIcon'
-                    : 'pi-exclamation-triangle warningIcon'
-                "
-              />
-
-              <span>{{ service.name }}</span>
-            </div>
-
-            <span class="statusBadge" :class="service.status">
-              {{ service.status }}
-            </span>
-          </div>
-
-          <div class="metricRow">
-            <span>CPU</span>
-            <span>{{ service.cpu }}%</span>
-          </div>
-
-          <div class="progressTrack">
-            <div class="progressFill cpuFill" :style="{ width: service.cpu + '%' }" />
-          </div>
-
-          <div class="metricRow mt12">
-            <span>Memory</span>
-            <span>{{ service.memory }}%</span>
-          </div>
-
-          <div class="progressTrack">
-            <div class="progressFill memoryFill" :style="{ width: service.memory + '%' }" />
-          </div>
-
-          <div class="serviceFooter">
-            <div>
-              <small>Instances</small>
-              <strong>{{ service.instances }}</strong>
-            </div>
-
-            <div>
-              <small>Uptime</small>
-              <strong>{{ service.uptime }}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Panel>
+    
   </div>
 </template>
 
@@ -120,10 +74,14 @@
 import { ref, onMounted } from 'vue'
 import Panel from 'primevue/panel'
 import Chart from 'primevue/chart'
+import MonitorService from './monitorService'
+import type {
+  InfrastructureMetricDTO,
+  LatencyPointDTO,
+} from './monitorService'
 
-const infrastructureData = ref()
-const latencyData = ref()
-
+const infrastructureData = ref({ labels: [] as string[], datasets: [] as any[] })
+const latencyData = ref({ labels: [] as string[], datasets: [] as any[] })
 const lineChartOptions = ref()
 const latencyOptions = ref()
 const metrics = ref([
@@ -149,82 +107,36 @@ const metrics = ref([
   },
 ])
 
-const services = ref([
-  {
-    name: 'forecast-service',
-    cpu: 34,
-    memory: 62,
-    instances: 3,
-    uptime: '99.97%',
-    status: 'healthy',
-  },
-  {
-    name: 'shift-optimizer',
-    cpu: 28,
-    memory: 55,
-    instances: 2,
-    uptime: '99.95%',
-    status: 'healthy',
-  },
-  {
-    name: 'employee-service',
-    cpu: 22,
-    memory: 48,
-    instances: 3,
-    uptime: '99.99%',
-    status: 'healthy',
-  },
-  {
-    name: 'analytics-engine',
-    cpu: 67,
-    memory: 78,
-    instances: 2,
-    uptime: '99.85%',
-    status: 'warning',
-  },
-  {
-    name: 'api-gateway',
-    cpu: 18,
-    memory: 31,
-    instances: 3,
-    uptime: '99.98%',
-    status: 'healthy',
-  },
-  {
-    name: 'notification-service',
-    cpu: 15,
-    memory: 42,
-    instances: 2,
-    uptime: '99.91%',
-    status: 'healthy',
-  },
-  {
-    name: 'auth-service',
-    cpu: 12,
-    memory: 35,
-    instances: 2,
-    uptime: '100%',
-    status: 'healthy',
-  },
-  {
-    name: 'ml-pipeline',
-    cpu: 72,
-    memory: 91,
-    instances: 2,
-    uptime: '99.80%',
-    status: 'warning',
-  },
-])
+const loading = ref(false)
+const error = ref('')
+
+const loadMonitorData = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const [infrastructure, latency] = await Promise.all([
+      MonitorService.getInfrastructureMetrics(),
+      MonitorService.getApiLatency(),
+    ])
+
+    infrastructureData.value = buildInfrastructureData(infrastructure)
+    latencyData.value = buildLatencyData(latency)
+  } catch (err) {
+    console.error('Failed to load monitor data', err)
+    error.value = 'Unable to load monitoring data.'
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
-  infrastructureData.value = buildInfrastructureData()
-  latencyData.value = buildLatencyData()
-
+  loadMonitorData()
   lineChartOptions.value = buildLineOptions()
   latencyOptions.value = buildLineOptions()
 })
 
-const buildInfrastructureData = () => {
+const buildInfrastructureData = (_items: InfrastructureMetricDTO[]) => {
   return {
     labels: [
       '30m',
@@ -298,7 +210,7 @@ const buildInfrastructureData = () => {
     ],
   }
 }
-const buildLatencyData = () => {
+const buildLatencyData = (_items: LatencyPointDTO[]) => {
   return {
     labels: [
       '29s ago',

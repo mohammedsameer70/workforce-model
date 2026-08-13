@@ -11,6 +11,7 @@ const NConstants = {
     REPORTS: 8,
     NOTIFICATIONS: 9,
     SETTINGS: 10,
+    AI_MODELS: 11,
   },
   colors: [
     '#E3F2FD', // Light Blue
