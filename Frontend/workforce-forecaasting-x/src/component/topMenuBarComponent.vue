@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, inject } from 'vue'
-import { lbl } from '@/assets/constants/labels'
+import { ref } from 'vue'
+import { useTheme } from './useTheme'
 import InputText from 'primevue/inputtext'
 import Badge from 'primevue/badge'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 const searchText = ref('')
-const isDarkMode = inject('isDarkMode', ref(true))
-const toggleTheme = inject('toggleTheme', () => {})
+
+const { isDark } = useTheme()
 </script>
 
 <template>
@@ -28,13 +29,8 @@ const toggleTheme = inject('toggleTheme', () => {})
     </div>
 
     <div class="navbar-right">
-      <button
-        class="theme-toggle"
-        @click="toggleTheme"
-        :title="isDarkMode ? 'Light Mode' : 'Dark Mode'"
-      >
-        <i :class="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"></i>
-      </button>
+      
+  <ToggleSwitch v-model="isDark" />
 
       <Badge value="Live" severity="success" class="status-badge"></Badge>
 

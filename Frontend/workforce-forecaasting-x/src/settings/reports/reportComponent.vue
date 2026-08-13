@@ -11,6 +11,13 @@
     </div>
 
     <!-- KPI Cards -->
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading reports...</div>
+      </div>
+    </div>
+
     <div class="metricsGrid">
       <div v-for="metric in metrics" :key="metric.title" class="metricCard">
         <i :class="metric.icon"></i>
@@ -69,102 +76,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
+import ReportsService from './reportsService'
+import type { ReportDTO, ReportMetricDTO } from './reportsService'
 
-const metrics = ref([
-  {
-    value: '8',
-    title: 'Total Reports',
-    icon: 'pi pi-file',
-  },
-  {
-    value: '7',
-    title: 'Ready for Download',
-    icon: 'pi pi-check-circle',
-  },
-  {
-    value: '1',
-    title: 'Generating',
-    icon: 'pi pi-spin pi-spinner',
-  },
-  {
-    value: '24.8',
-    title: 'Total Size (MB)',
-    icon: 'pi pi-database',
-  },
-])
+const metrics = ref<ReportMetricDTO[]>([])
+const reports = ref<ReportDTO[]>([])
+const loading = ref(false)
+const error = ref('')
 
-const reports = ref([
-  {
-    id: 'RPT-001',
-    report: 'Weekly Workforce Demand Report',
-    type: 'Forecasting',
-    generated: '2024-01-15 09:00',
-    size: '2.4 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-002',
-    report: 'Shift Optimization Summary',
-    type: 'Scheduling',
-    generated: '2024-01-15 08:30',
-    size: '1.8 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-003',
-    report: 'Employee Utilization Report',
-    type: 'HR Analytics',
-    generated: '2024-01-14 18:00',
-    size: '3.1 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-004',
-    report: 'Operational KPI Dashboard Export',
-    type: 'Operations',
-    generated: '2024-01-14 12:00',
-    size: '5.6 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-005',
-    report: 'ML Model Performance Report',
-    type: 'Data Science',
-    generated: '2024-01-13 16:00',
-    size: '1.2 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-006',
-    report: 'Infrastructure Benchmark Report',
-    type: 'DevOps',
-    generated: '2024-01-13 14:00',
-    size: '4.3 MB',
-    status: 'Generating',
-  },
-  {
-    id: 'RPT-007',
-    report: 'Monthly Capacity Planning',
-    type: 'Planning',
-    generated: '2024-01-12 10:00',
-    size: '2.9 MB',
-    status: 'Ready',
-  },
-  {
-    id: 'RPT-008',
-    report: 'Department Attendance Analysis',
-    type: 'HR Analytics',
-    generated: '2024-01-11 09:00',
-    size: '1.5 MB',
-    status: 'Ready',
-  },
-])
+const loadReports = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const [metricResponse, reportResponse] = await Promise.all([
+      ReportsService.getReportMetrics(),
+      ReportsService.getReports(),
+    ])
+    metrics.value = metricResponse
+    reports.value = reportResponse
+  } catch (err) {
+    console.error('Failed to load reports', err)
+    error.value = 'Unable to load reports.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadReports)
 </script>
 
 <style scoped src="./reportComponent.css"></style>

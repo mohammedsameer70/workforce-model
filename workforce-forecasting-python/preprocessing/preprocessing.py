@@ -138,13 +138,19 @@ def preprocess_dataset(df):
     # -------------------------------------------------
 
     columns_to_drop = [
-        "EmployeeID",
-        "EmployeeName",
-        "Supervisor",
-        "Timestamp",
-        "ClockIn",
-        "ClockOut",
-        "Remarks",
+        "FirstName",
+        "LastName",
+        "Email",
+        "PhoneNumber",
+        "Manager",
+        "DateOfBirth",
+        "HireDate",
+        "LastUpdated",
+        "ClockInTime",
+        "ClockOutTime",
+        "SpecialEvent",
+        "AlertTitle",
+        "AlertMessage",
     ]
 
     existing_columns = [col for col in columns_to_drop if col in df.columns]
@@ -328,15 +334,20 @@ def prepare_prediction_data(df):
     # Remove unwanted columns
     # ---------------------------------------------
     columns_to_drop = [
-        "EmployeeID",
-        "EmployeeName",
-        "Supervisor",
-        "Timestamp",
-        "ClockIn",
-        "ClockOut",
-        "Remarks",
+        "FirstName",
+        "LastName",
+        "Email",
+        "PhoneNumber",
+        "Manager",
+        "DateOfBirth",
+        "HireDate",
+        "LastUpdated",
+        "ClockInTime",
+        "ClockOutTime",
+        "SpecialEvent",
+        "AlertTitle",
+        "AlertMessage",
     ]
-
     existing_columns = [col for col in columns_to_drop if col in df.columns]
 
     df.drop(columns=existing_columns, inplace=True, errors="ignore")
@@ -351,21 +362,41 @@ def prepare_prediction_data(df):
             df[col] = df[col].fillna(df[col].median())
 
     # ---------------------------------------------
-    # Encode categorical columns
-    # ---------------------------------------------
-    df = encode_dataset(df)
-
-    # ---------------------------------------------
     # Remove columns not used for prediction
     # ---------------------------------------------
-    X = df.drop(
+    # Note: We do NOT encode here - encoding happens in PredictionService
+    # to preserve original column names for the UI
+
+    X = df.copy()
+
+    X.drop(
         columns=[
-            "AttendanceDate",
             "TargetDemand",
+            "AlertID",
+            "AlertCreatedAt",
         ],
+        inplace=True,
         errors="ignore",
     )
 
+    # Remove columns that are completely empty
+    X = X.dropna(axis=1, how="all")
+
     print("\nPrediction Dataset Shape :", X.shape)
+
+    # Final validation
+    remaining = X.isnull().sum()
+
+    remaining = remaining[remaining > 0]
+
+    if not remaining.empty:
+
+        print("\nRemaining NaN values:")
+
+        print(remaining)
+
+        raise ValueError("Prediction dataset still contains NaN values.")
+
+    print("\nPrediction dataset ready.")
 
     return X

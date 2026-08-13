@@ -1,8 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-import os
 import shutil
 import traceback
+import os
+import json
+import pandas as pd
 
+from serviceFast.controller.prediction_controller.prediction_router import (
+    prediction_service,
+)
 from training.training_service import TrainingService
 from fastapi.responses import FileResponse
 
@@ -67,3 +72,9 @@ async def download_cleaned_dataset():
     return FileResponse(
         path=file_path, filename="cleaned_dataset.csv", media_type="text/csv"
     )
+
+
+@router.get("/fetch-data")
+def fetch_data():
+
+    return prediction_service.fetch_data()

@@ -81,28 +81,7 @@
   color: #6b7280;
 }
 
-.theme-toggle {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-toggle:hover {
-  color: #00d4ff;
-  background-color: rgba(0, 212, 255, 0.1);
-}
-
-.theme-toggle i {
-  font-size: 1.3rem;
-}
+/* theme toggle removed — app uses single light theme */
 
 .status-badge {
   display: flex;
@@ -192,4 +171,20 @@
   .user-profile {
     padding: 0.5rem;
   }
+}
+:root {
+    --bg: #ffffff;
+    --card: #ffffff;
+    --text: #222;
+}
+
+.dark {
+    --bg: #111827;
+    --card: #1f2937;
+    --text: #f8fafc;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
 }

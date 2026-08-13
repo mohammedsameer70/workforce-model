@@ -6,6 +6,13 @@
     </div>
 
     <!-- Profile -->
+    <div v-if="loading" class="page-loading-overlay">
+      <div class="page-loading-panel">
+        <div class="page-loading-spinner"></div>
+        <div>Loading settings...</div>
+      </div>
+    </div>
+
     <div class="settingsCard">
       <div class="cardHeader">
         <div class="iconBox">
@@ -57,14 +64,7 @@
       </div>
 
       <div class="cardBody">
-        <div class="settingRow">
-          <div>
-            <h4>Dark Mode</h4>
-            <span>Toggle between light and dark theme</span>
-          </div>
-
-          <InputSwitch v-model="appearance.darkMode" />
-        </div>
+        <!-- Dark Mode removed; app uses single light theme -->
 
         <div class="settingRow">
           <div>
@@ -185,47 +185,115 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import InputSwitch from 'primevue/inputswitch'
+import SettingsService from './settingsService'
+import type { SettingsDTO } from './settingsService'
 
 const roles = ['Super Admin', 'Operations Admin', 'Manager']
 const departments = ['All Departments', 'Inbound', 'Outbound', 'Packing', 'Sortation']
-
 const models = ['LSTM v3.2 (Active)', 'XGBoost v2.1', 'Prophet v1.0']
-
 const refreshOptions = ['30 seconds', '1 minute', '5 minutes']
 
 const profile = ref({
-  fullName: 'Operations Admin',
-  email: 'admin@workforceai.com',
-  role: 'Super Admin',
-  department: 'All Departments',
+  fullName: '',
+  email: '',
+  role: '',
+  department: '',
 })
 
 const appearance = ref({
-  darkMode: true,
+  darkMode: false,
   compactView: false,
-  animations: true,
+  animations: false,
 })
 
 const notifications = ref({
-  criticalAlerts: true,
-  shiftRecommendations: true,
-  systemMonitoring: true,
-  emailDigest: false,
+  critical: false,
+  shift: false,
+  monitoring: false,
+  email: false,
 })
 
 const config = ref({
-  model: 'LSTM v3.2 (Active)',
-  refresh: '30 seconds',
-  apiUrl: 'https://api.workforceai.internal',
-  mlUrl: 'https://ml.workforceai.internal',
+  model: '',
+  refresh: '',
+  api: '',
+  ml: '',
 })
+
+const loading = ref(false)
+const message = ref('')
+
+const loadSettings = async () => {
+  loading.value = true
+  message.value = ''
+
+  try {
+    const data = await SettingsService.getSettings()
+    profile.value = data.profile
+    appearance.value = data.appearance
+    notifications.value = {
+      critical: data.notifications.criticalAlerts,
+      shift: data.notifications.shiftRecommendations,
+      monitoring: data.notifications.systemMonitoring,
+      email: data.notifications.emailDigest,
+    }
+    config.value = {
+      model: data.config.model,
+      refresh: data.config.refresh,
+      api: data.config.apiUrl,
+      ml: data.config.mlUrl,
+    }
+  } catch (err) {
+    console.error('Failed to load settings', err)
+    message.value = 'Unable to load settings.'
+  } finally {
+    loading.value = false
+  }
+}
+
+const saveChanges = async () => {
+  loading.value = true
+  message.value = ''
+
+  try {
+    const payload: SettingsDTO = {
+      profile: profile.value,
+      appearance: appearance.value,
+      notifications: {
+        criticalAlerts: notifications.value.critical,
+        shiftRecommendations: notifications.value.shift,
+        systemMonitoring: notifications.value.monitoring,
+        emailDigest: notifications.value.email,
+      },
+      config: {
+        model: config.value.model,
+        refresh: config.value.refresh,
+        apiUrl: config.value.api,
+        mlUrl: config.value.ml,
+      },
+    }
+    await SettingsService.saveSettings(payload)
+    message.value = 'Settings saved successfully.'
+  } catch (err) {
+    console.error('Failed to save settings', err)
+    message.value = 'Unable to save settings.'
+  } finally {
+    loading.value = false
+  }
+}
+
+const cancelChanges = () => {
+  loadSettings()
+}
+
+onMounted(loadSettings)
 </script>
 
 <style scoped src="./settingsComponent.css"></style>
