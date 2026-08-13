@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="schema.sql" type="DatabaseScript" editBeforeRun="true" nameIsGenerated="true">
+    <script-file value="$PROJECT_DIR$/Backend/workForceApplication/src/main/resources/schema.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="97f66f27-20d7-4bcc-b5e9-fe98036c0c8b" namespace="schema/&quot;workforce&quot;" />
+    <method v="2" />
+  </configuration>
+</component>
