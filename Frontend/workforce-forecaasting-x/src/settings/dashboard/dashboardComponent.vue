@@ -168,8 +168,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
-import CLDashboardService from '../aiModels/dashboardService'
-
+import CLDashboardService from "./dashboardService";
 ChartJS.register(
   LineElement,
   BarElement,
