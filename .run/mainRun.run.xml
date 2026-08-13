@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="mainRun" type="CompoundRunConfigurationType">
+    <toRun name="dev" type="js.build_tools.npm" />
+    <toRun name="FastApi" type="PythonConfigurationType" />
+    <toRun name="WorkForceApplication" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>
