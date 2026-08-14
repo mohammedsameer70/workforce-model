@@ -302,6 +302,119 @@
 
     </div>
 
+    <!-- ================= TRAINING RUN COMPARISON ================= -->
+
+    <div
+        v-if="trainingHistory.length > 1"
+        class="training-run-comparison"
+    >
+
+      <div class="section-header">
+
+        <h2>
+          Training Run Comparison
+        </h2>
+
+        <p>
+          Compare performance across different dataset training runs.
+        </p>
+
+      </div>
+
+      <div class="table-wrapper">
+
+        <table class="comparison-table">
+
+          <thead>
+
+          <tr>
+
+            <th>Run #</th>
+
+            <th>Dataset</th>
+
+            <th>Date</th>
+
+            <th>Best Model</th>
+
+            <th>RMSE</th>
+
+            <th>R²</th>
+
+            <th>Status</th>
+
+            <th>Improvement</th>
+
+          </tr>
+
+          </thead>
+
+          <tbody>
+
+          <tr
+              v-for="(record, index) in trainingHistory.slice().reverse()"
+              :key="record.date"
+          >
+
+            <td>
+              {{ trainingHistory.length - index }}
+            </td>
+
+            <td>
+              {{ record.dataset }}
+            </td>
+
+            <td>
+              {{ record.date }}
+            </td>
+
+            <td>
+              <strong>
+                {{ record.bestModel }}
+              </strong>
+            </td>
+
+            <td>
+              {{ record.rmse?.toFixed(4) || "-" }}
+            </td>
+
+            <td>
+              {{ record.r2?.toFixed(4) || "-" }}
+            </td>
+
+            <td>
+
+              <span
+                  class="status-badge"
+                  :class="'status-' + record.status"
+              >
+                {{ record.status }}
+              </span>
+
+            </td>
+
+            <td>
+              <span
+                  v-if="index < trainingHistory.length - 1"
+                  :class="getImprovementClass(record, trainingHistory[trainingHistory.length - 1 - index - 1])"
+              >
+                {{ getImprovementText(record, trainingHistory[trainingHistory.length - 1 - index - 1]) }}
+              </span>
+              <span v-else>
+                -
+              </span>
+            </td>
+
+          </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
     <!-- ================= CLEANED CSV COMPARISON ================= -->
 
     <div
@@ -446,7 +559,7 @@
             </div>
 
             <h3>AVERAGE</h3>
-            <p>{{ predictionSummary.totalRecords > 0 ? predictionSummary.averagePrediction.toFixed(2) : "-" }}</p>
+            <p>{{ predictionSummary?.averagePrediction && typeof predictionSummary.averagePrediction === 'number' ? predictionSummary.averagePrediction.toFixed(2) : "-" }}</p>
           </div>
 
           <div class="card">
@@ -455,7 +568,7 @@
             </div>
 
             <h3>MAXIMUM</h3>
-            <p>{{ predictionSummary.totalRecords > 0 ? predictionSummary.maximumPrediction.toFixed(2) : "-" }}</p>
+            <p>{{ predictionSummary?.maximumPrediction && typeof predictionSummary.maximumPrediction === 'number' ? predictionSummary.maximumPrediction.toFixed(2) : "-" }}</p>
           </div>
 
         </div>
@@ -792,11 +905,12 @@ import { ref, nextTick, computed, onMounted } from "vue";
 import { Chart, registerables } from "chart.js";
 import FileUpload from "primevue/fileupload";
 import type { FileUploadSelectEvent } from "primevue/fileupload";
+import { useToast } from 'primevue/usetoast';
 
 import { lbl } from "@/assets/constants/labels";
 import AIModelService from "./aiModelService";
 import CLDashboardService from "../dashboard/dashboardService";
-import { aiModelReady } from '@/state/aiModelGate'
+import { aiModelReady, isTraining as globalIsTraining, isPredicting as globalIsPredicting } from '@/state/aiModelGate'
 
 import type {
     TrainingResponseDTO,
@@ -805,6 +919,8 @@ import type {
 } from "./trainingDTO";
 
 Chart.register(...registerables);
+
+const toast = useToast();
 
 /* ==========================================================
    KPI
@@ -953,12 +1069,102 @@ const fetchDashboardMetrics = async () => {
       dashboardMetrics.value = mapDashboardMetrics(dashboardResponse.metrics)
     }
   } catch (error) {
-    console.error('Failed to fetch dashboard metrics', error)
+    console.log('Dashboard metrics endpoint not available - using local metrics')
+    // Dashboard endpoint not implemented yet, skip gracefully
+  }
+};
+
+const loadFromDatabase = async () => {
+  try {
+    // Load latest prediction from database
+    const latestPrediction = await AIModelService.getLatestPrediction();
+    if (latestPrediction && latestPrediction.results) {
+      predictionResults.value = latestPrediction.results;
+      predictionMetadata.value = {
+        model: latestPrediction.model,
+        totalRecords: latestPrediction.total_records,
+        averagePrediction: latestPrediction.average_prediction,
+        maximumPrediction: latestPrediction.maximum_prediction,
+        minimumPrediction: latestPrediction.minimum_prediction
+      };
+      // Also update predictionSummary for UI display
+      predictionSummary.value = {
+        model: latestPrediction.model || "Unknown",
+        totalRecords: latestPrediction.total_records || 0,
+        averagePrediction: latestPrediction.average_prediction || 0,
+        maximumPrediction: latestPrediction.maximum_prediction || 0,
+        minimumPrediction: latestPrediction.minimum_prediction || 0
+      };
+      console.log("Loaded prediction data from database");
+    }
+
+    // Load latest model from database
+    const latestModel = await AIModelService.getLatestModel();
+    if (latestModel) {
+      trainingResult.value = {
+        fileName: latestModel.name || "Unknown",
+        bestModel: latestModel.algorithm || "Unknown",
+        rmse: latestModel.rmse,
+        r2: latestModel.rSquared,
+        status: latestModel.status || "Ready",
+        actions: ["view", "download", "delete"]
+      };
+      trainingStatus.value = latestModel.status || "Ready";
+
+      // Update dashboard metrics with loaded data
+      setDashboardTrainingMetrics({
+        bestModel: latestModel.algorithm || "Unknown",
+        metrics: {
+          RMSE: latestModel.rmse,
+          MAE: null,
+          MAPE: null,
+          R2: latestModel.rSquared
+        },
+        status: latestModel.status || "Ready"
+      });
+
+      // Check if this model is already in training history to avoid duplicates
+      const modelExists = trainingHistory.value.some(
+        h => h.dataset === latestModel.name && h.bestModel === latestModel.algorithm
+      );
+
+      if (!modelExists) {
+        trainingHistory.value.unshift({
+          date: latestModel.lastTrained ? new Date(latestModel.lastTrained).toLocaleString() : new Date().toLocaleString(),
+          dataset: latestModel.name || "Unknown",
+          algorithmsUsed: [latestModel.algorithm || "Unknown"],
+          bestModel: latestModel.algorithm || "Unknown",
+          rmse: latestModel.rmse,
+          r2: latestModel.rSquared,
+          status: (latestModel.status || "Ready").toLowerCase(),
+          actions: ["view", "download", "delete"]
+        });
+      }
+      console.log("Loaded model data from database");
+    }
+
+    // Load model comparisons from database
+    const comparisons = await AIModelService.getModelComparisons();
+    if (comparisons && Array.isArray(comparisons)) {
+      models.value = comparisons.map((m: any) => ({
+        name: m.modelName || m.algorithm,
+        rmse: m.rmse,
+        mae: m.mae,
+        mape: m.mape,
+        r2: m.rSquared,
+        trainingTime: m.trainingTime ? `${m.trainingTime}ms` : "-",
+        status: m.status || "Good"
+      }));
+      console.log("Loaded model comparisons from database");
+    }
+  } catch (error) {
+    console.log("No previous data found in database:", error);
   }
 };
 
 onMounted(() => {
-  // Keep KPI cards pending until training or prediction provides real metrics.
+  loadFromDatabase();
+  fetchDashboardMetrics();
 });
 
 /* ==========================================================
@@ -995,7 +1201,10 @@ const selectedAlgorithms = ref<string[]>([]);
    TRAINING
 ========================================================== */
 
-const isTraining = ref(false);
+const isTraining = computed({
+  get: () => globalIsTraining.value,
+  set: (value) => { globalIsTraining.value = value }
+});
 
 const trainingProgress = ref(0);
 
@@ -1007,7 +1216,10 @@ const trainingAbortController = ref<AbortController | null>(null);
    PREDICTION
 ========================================================== */
 
-const isPredicting = ref(false);
+const isPredicting = computed({
+  get: () => globalIsPredicting.value,
+  set: (value) => { globalIsPredicting.value = value }
+});
 
 const predictionProgress = ref(0);
 
@@ -1067,6 +1279,20 @@ const models = ref<any[]>([]);
 ========================================================== */
 
 const predictionSummary = ref({
+
+    model: "",
+
+    totalRecords: 0,
+
+    averagePrediction: 0,
+
+    maximumPrediction: 0,
+
+    minimumPrediction: 0
+
+});
+
+const predictionMetadata = ref({
 
     model: "",
 
@@ -1192,6 +1418,14 @@ const getDisplayNumber = (item: any, keys: string[]) => {
     return Number.isFinite(numberValue) ? numberValue.toFixed(2) : "-";
 };
 
+const formatPredictionValue = (value: any) => {
+    if (value === null || value === undefined || value === 0) {
+        return "-";
+    }
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) && numberValue > 0 ? numberValue.toFixed(2) : "-";
+};
+
 const getComparisonKey = (item: any) => {
     const candidateKeys = [
         "ActualDemand",
@@ -1259,12 +1493,21 @@ const drawPredictionChart = async () => {
             label: "Raw Demand",
             data: actualData,
             borderColor: "#10b981",
-            backgroundColor: "rgba(16,185,129,0.18)",
+            backgroundColor: (context: any) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(16,185,129,0.4)');
+                gradient.addColorStop(1, 'rgba(16,185,129,0.05)');
+                return gradient;
+            },
             borderWidth: 3,
-            tension: 0.35,
+            tension: 0.4,
             fill: true,
-            pointRadius: 3,
-            pointBackgroundColor: "#10b981"
+            pointRadius: 4,
+            pointBackgroundColor: "#10b981",
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 2,
+            pointHoverRadius: 6
         });
     }
 
@@ -1273,12 +1516,21 @@ const drawPredictionChart = async () => {
             label: "Predicted Demand",
             data: predictedData,
             borderColor: "#3b82f6",
-            backgroundColor: "rgba(59,130,246,0.15)",
+            backgroundColor: (context: any) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(59,130,246,0.4)');
+                gradient.addColorStop(1, 'rgba(59,130,246,0.05)');
+                return gradient;
+            },
             borderWidth: 3,
-            tension: 0.35,
+            tension: 0.4,
             fill: true,
-            pointRadius: 3,
-            pointBackgroundColor: "#3b82f6"
+            pointRadius: 4,
+            pointBackgroundColor: "#3b82f6",
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 2,
+            pointHoverRadius: 6
         });
     }
 
@@ -1291,23 +1543,77 @@ const drawPredictionChart = async () => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             plugins: {
                 legend: {
-                    display: true
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    cornerRadius: 8,
+                    displayColors: true
                 }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: "Attendance Date"
+                        text: "Attendance Date",
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        color: '#6b7280'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#6b7280'
                     }
                 },
                 y: {
                     beginAtZero: false,
                     title: {
                         display: true,
-                        text: "Predicted Demand"
+                        text: "Predicted Demand",
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        color: '#6b7280'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#6b7280'
                     }
                 }
             }
@@ -1381,44 +1687,118 @@ const drawDataComparisonChart = async () => {
                     label: "Raw Uploaded CSV",
                     data: rawDatasetValues.value,
                     borderColor: "#6366f1",
-                    backgroundColor: "rgba(99,102,241,0.18)",
+                    backgroundColor: (context: any) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                        gradient.addColorStop(0, 'rgba(99,102,241,0.4)');
+                        gradient.addColorStop(1, 'rgba(99,102,241,0.05)');
+                        return gradient;
+                    },
                     borderWidth: 2,
-                    tension: 0.35,
+                    tension: 0.4,
                     fill: true,
-                    pointRadius: 2
+                    pointRadius: 3,
+                    pointBackgroundColor: "#6366f1",
+                    pointBorderColor: "#ffffff",
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
                 },
                 {
                     label: "Cleaned CSV",
                     data: cleanedDatasetValues.value,
                     borderColor: "#10b981",
-                    backgroundColor: "rgba(16,185,129,0.18)",
+                    backgroundColor: (context: any) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                        gradient.addColorStop(0, 'rgba(16,185,129,0.4)');
+                        gradient.addColorStop(1, 'rgba(16,185,129,0.05)');
+                        return gradient;
+                    },
                     borderWidth: 2,
-                    tension: 0.35,
+                    tension: 0.4,
                     fill: true,
-                    pointRadius: 2
+                    pointRadius: 3,
+                    pointBackgroundColor: "#10b981",
+                    pointBorderColor: "#ffffff",
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             plugins: {
                 legend: {
-                    display: true
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    cornerRadius: 8,
+                    displayColors: true
                 }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: "Record"
+                        text: "Record",
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        color: '#6b7280'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#6b7280'
                     }
                 },
                 y: {
                     beginAtZero: false,
                     title: {
                         display: true,
-                        text: "Value"
+                        text: "Value",
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        color: '#6b7280'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#6b7280'
                     }
                 }
             }
@@ -1609,6 +1989,13 @@ const trainModel = async () => {
         await fetchDashboardMetrics();
         aiModelReady.value = true;
 
+        toast.add({
+            severity: 'success',
+            summary: 'Training Successful',
+            detail: `Model trained successfully with ${response.bestModel} (RMSE: ${response.metrics.RMSE?.toFixed(4)}, R²: ${response.metrics.R2?.toFixed(4)})`,
+            life: 5000
+        });
+
         /* ==========================================
            Model Comparison
         ========================================== */
@@ -1781,15 +2168,15 @@ const predict = async () => {
 
         predictionSummary.value = {
 
-            model: response.model,
+            model: response.model || "Unknown",
 
-            totalRecords: response.total_records,
+            totalRecords: response.total_records || 0,
 
-            averagePrediction: response.average_prediction,
+            averagePrediction: response.average_prediction || 0,
 
-            maximumPrediction: response.maximum_prediction,
+            maximumPrediction: response.maximum_prediction || 0,
 
-            minimumPrediction: response.minimum_prediction
+            minimumPrediction: response.minimum_prediction || 0
 
         };
 
@@ -1816,6 +2203,13 @@ const predict = async () => {
 
         await fetchDashboardMetrics();
         aiModelReady.value = true;
+
+        toast.add({
+            severity: 'success',
+            summary: 'Prediction Successful',
+            detail: `Prediction completed for ${response.total_records} records using ${response.model}`,
+            life: 5000
+        });
 
         /* ==========================================
            Reset Upload
@@ -1871,6 +2265,40 @@ const cancelTraining = () => {
 
     trainingAbortController.value = null;
 
+};
+
+/* ==========================================================
+   TRAINING RUN COMPARISON HELPERS
+========================================================== */
+
+const getImprovementClass = (current: TrainingHistoryDTO, previous: TrainingHistoryDTO) => {
+  if (!current.rmse || !previous.rmse) return '';
+  
+  const rmseImprovement = previous.rmse - current.rmse;
+  const r2Improvement = (current.r2 || 0) - (previous.r2 || 0);
+  
+  if (rmseImprovement > 0 && r2Improvement > 0) {
+    return 'improvement-positive';
+  } else if (rmseImprovement < 0 && r2Improvement < 0) {
+    return 'improvement-negative';
+  } else {
+    return 'improvement-neutral';
+  }
+};
+
+const getImprovementText = (current: TrainingHistoryDTO, previous: TrainingHistoryDTO) => {
+  if (!current.rmse || !previous.rmse) return '-';
+  
+  const rmseImprovement = previous.rmse - current.rmse;
+  const r2Improvement = (current.r2 || 0) - (previous.r2 || 0);
+  
+  if (rmseImprovement > 0 && r2Improvement > 0) {
+    return `↓ RMSE: ${rmseImprovement.toFixed(4)} | ↑ R²: ${r2Improvement.toFixed(4)}`;
+  } else if (rmseImprovement < 0 && r2Improvement < 0) {
+    return `↑ RMSE: ${Math.abs(rmseImprovement).toFixed(4)} | ↓ R²: ${Math.abs(r2Improvement).toFixed(4)}`;
+  } else {
+    return 'Mixed';
+  }
 };
 
 /* ==========================================================
@@ -2014,4 +2442,4 @@ const resetDashboard = () => {
 
 </script>
 
-<style scoped src=./aiModel.css></style>
+<style scoped src="./aiModel.css"></style>

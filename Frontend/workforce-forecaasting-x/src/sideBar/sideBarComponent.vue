@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { lbl } from '@/assets/constants/labels'
 import Divider from 'primevue/divider'
+import { aiModelReady, isTraining, isPredicting } from '@/state/aiModelGate'
 
 const route = useRoute()
+const router = useRouter()
 
 const isCollapsed = ref(false)
 
@@ -28,18 +30,49 @@ const items = ref([
 ])
 
 const isActive = (itemRoute: string) => route.path === itemRoute
+
+const isItemDisabled = (itemRoute: string) => {
+  const allowedPaths = ['/home-settings', '/ai-models']
+  
+  // Disable all except AI_MODELS during training/prediction
+  if (isTraining.value || isPredicting.value) {
+    return itemRoute !== '/ai-models'
+  }
+  
+  // Disable all except HOMESETTINGS and AI_MODELS until model is ready
+  if (!aiModelReady.value) {
+    return !allowedPaths.includes(itemRoute)
+  }
+  
+  return false
+}
+
+const handleNavigation = (itemRoute: string) => {
+  if (isItemDisabled(itemRoute)) {
+    if (isTraining.value || isPredicting.value) {
+      alert('Please wait for training/prediction to complete before navigating to other screens.')
+    } else if (!aiModelReady.value) {
+      alert('Please train an AI model first before accessing other screens.')
+    }
+    return
+  }
+  router.push(itemRoute)
+}
 </script>
 
 <template>
   <div class="sidebar" :class="{ collapsed: isCollapsed }">
     <!-- MENU -->
     <div class="menu">
-      <router-link
+      <div
         v-for="item in items"
         :key="item.route"
-        :to="item.route"
         class="menu-item"
-        :class="{ active: isActive(item.route) }"
+        :class="{ 
+          active: isActive(item.route),
+          disabled: isItemDisabled(item.route)
+        }"
+        @click="handleNavigation(item.route)"
       >
         <div class="icon-box">
           <i :class="item.icon"></i>
@@ -50,7 +83,7 @@ const isActive = (itemRoute: string) => route.path === itemRoute
         <span v-if="!isCollapsed" class="label">
           {{ item.label }}
         </span>
-      </router-link>
+      </div>
     </div>
 
     <!-- TOGGLE BUTTON -->
@@ -134,9 +167,10 @@ const isActive = (itemRoute: string) => route.path === itemRoute
   color: #cbd5e1;
   text-decoration: none;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.menu-item:hover {
+.menu-item:hover:not(.disabled) {
   background: rgba(255, 255, 255, 0.06);
   color: white;
 }
@@ -144,6 +178,12 @@ const isActive = (itemRoute: string) => route.path === itemRoute
 .menu-item.active {
   background: rgba(34, 197, 94, 0.12);
   color: #22c55e;
+}
+
+.menu-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ICON BOX */

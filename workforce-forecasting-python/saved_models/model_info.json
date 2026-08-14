@@ -1,8 +1,8 @@
 {
-    "Model": "XGBoost",
-    "RMSE": 3.7616,
-    "MAE": 2.7884,
-    "MAPE": 2.37,
-    "R2": 0.9238,
-    "DeploymentModel": "XGBoost"
+    "Model": "Linear Regression",
+    "RMSE": 3.9226,
+    "MAE": 2.9505,
+    "MAPE": 2.51,
+    "R2": 0.9171,
+    "DeploymentModel": "Linear Regression"
 }

@@ -11,7 +11,7 @@ import CapacityPlanningComponent from '@/settings/capacityPlanning/capacityPlann
 import MonitorComponent from '@/settings/monitor/monitorComponent.vue'
 import BenchmarkComponent from '@/settings/benchmark/benchmarkComponent.vue'
 import ReportComponent from '@/settings/reports/reportComponent.vue'
-import { aiModelReady } from '@/state/aiModelGate'
+import { aiModelReady, isTraining, isPredicting } from '@/state/aiModelGate'
 import NotificationComponent from '@/settings/notification/notificationComponent.vue'
 import SetttingsComponent from '@/settings/settings/setttingsComponent.vue'
 const router = createRouter({
@@ -91,7 +91,17 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const allowedPaths = [ROUTES.HOMESETTINGS, ROUTES.AI_MODELS]
 
+  // Disable all screens except AI_MODELS during training or prediction
+  if ((isTraining.value || isPredicting.value)) {
+    if (to.path !== ROUTES.AI_MODELS) {
+      alert('Please wait for training/prediction to complete before navigating to other screens.')
+      return next(false)
+    }
+  }
+
+  // Disable all screens except HOMESETTINGS and AI_MODELS until model is ready
   if (!aiModelReady.value && !allowedPaths.includes(to.path)) {
+    alert('Please train an AI model first before accessing other screens.')
     return next(ROUTES.AI_MODELS)
   }
 

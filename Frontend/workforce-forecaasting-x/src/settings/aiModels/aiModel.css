@@ -445,6 +445,42 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.training-run-comparison {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.improvement-positive {
+  color: #16a34a;
+  font-weight: 600;
+  background: #dcfce7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.improvement-negative {
+  color: #dc2626;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.improvement-neutral {
+  color: #6b7280;
+  font-weight: 600;
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
 @media (max-width: 768px) {
   .cardsInfo {
     grid-template-columns: 1fr;

@@ -14,6 +14,8 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
+import Toast from 'primevue/toast'
+import ToastService from 'primevue/toastservice'
 
 /* Employee Page Components */
 import DataTable from 'primevue/datatable'
@@ -72,6 +74,8 @@ app.use(PrimeVue, {
   }
 })
 
+app.use(ToastService)
+
 /* Router */
 app.use(router)
 /* Global PrimeVue Components */
@@ -82,6 +86,7 @@ app.component('Card', Card)
 app.component('Button', Button)
 app.component('Tag', Tag)
 app.component('Divider', Divider)
+app.component('Toast', Toast)
 
 /* Employee Components */
 app.component('DataTable', DataTable)

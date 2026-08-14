@@ -1,6 +1,7 @@
 import joblib
 import json
 import os
+import pandas as pd
 
 
 class PredictionService:
@@ -23,18 +24,31 @@ class PredictionService:
 
     def predict(self, dataframe):
 
-        # Add missing columns
-        for column in self.training_columns:
-            if column not in dataframe.columns:
-                dataframe[column] = 0
+        # Add missing columns using concat to avoid fragmentation
+        missing_columns = [col for col in self.training_columns if col not in dataframe.columns]
+        if missing_columns:
+            missing_df = pd.DataFrame(0, index=dataframe.index, columns=missing_columns)
+            dataframe = pd.concat([dataframe, missing_df], axis=1)
 
         # Keep only training columns
         dataframe = dataframe[self.training_columns]
 
         predictions = self.model.predict(dataframe)
 
+        # Create results with metadata for backend
+        results = []
+        for i, pred in enumerate(predictions):
+            result = {
+                "attendanceDate": dataframe.iloc[i].get("AttendanceDate", ""),
+                "department": dataframe.iloc[i].get("Department", ""),
+                "actualDemand": dataframe.iloc[i].get("WorkforceDemand", None),
+                "predictedDemand": float(pred)
+            }
+            results.append(result)
+
         return {
             "model": self.model_info["Model"],
             "total_records": len(predictions),
             "predictions": predictions.tolist(),
+            "results": results
         }

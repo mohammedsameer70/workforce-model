@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import sideBarComponent from '@/sideBar/sideBarComponent.vue'
 import topMenuBarComponent from '@/component/topMenuBarComponent.vue'
+import Toast from 'primevue/toast'
 
 const route = useRoute()
 // Default light theme only; removed dark-mode toggle
@@ -15,6 +16,7 @@ const showSidebar = computed(() => {
 
 <template>
   <div class="app-wrapper">
+    <Toast />
     <topMenuBarComponent v-if="showSidebar" class="top-bar" />
 
     <div class="layout">

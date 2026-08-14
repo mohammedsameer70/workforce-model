@@ -1,4 +1,6 @@
 import pandas as pd
+import warnings
+import numpy as np
 
 # =====================================================
 # LOAD DATASET
@@ -270,6 +272,9 @@ def split_train_test(X, y):
 def prepare_prediction_data(df):
 
     print("\nPreparing Prediction Dataset...")
+
+    # Suppress warnings for empty slices in rolling mean calculations
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='Mean of empty slice')
 
     df = df.copy()
 
