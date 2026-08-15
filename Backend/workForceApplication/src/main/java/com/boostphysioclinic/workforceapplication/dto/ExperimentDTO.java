@@ -1,0 +1,18 @@
+package com.boostphysioclinic.workforceapplication.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ExperimentDTO {
+    private String id;
+    private String name;
+    private String status;
+    private String startDate;
+    private String endDate;
+}
