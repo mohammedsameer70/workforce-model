@@ -68,7 +68,7 @@
 
       <Column header="Action">
         <template #body="{ data }">
-          <Button icon="pi pi-download" label="Export" text :disabled="data.status !== 'Ready'" />
+          <Button icon="pi pi-download" label="Export" text :disabled="data.status !== 'Ready'" @click="exportReport(data)" />
         </template>
       </Column>
     </DataTable>
@@ -121,6 +121,31 @@ const generateReport = async () => {
     metrics.value = await ReportsService.getReportMetrics()
   } catch (err) {
     console.error('Failed to generate report', err)
+  }
+}
+
+const exportReport = async (report: ReportDTO) => {
+  try {
+    const response = await ReportsService.downloadReport(report.id)
+    
+    // Create blob from response
+    const blob = new Blob([response], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    
+    // Create download link
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${report.report.replace(/\s+/g, '_')}.txt`
+    document.body.appendChild(link)
+    link.click()
+    
+    // Cleanup
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    console.log(`Exported report: ${report.report}`)
+  } catch (err) {
+    console.error('Failed to export report', err)
   }
 }
 

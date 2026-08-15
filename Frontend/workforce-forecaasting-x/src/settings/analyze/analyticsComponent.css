@@ -1,0 +1,9 @@
+.tab-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-option i {
+  font-size: 14px;
+}

@@ -34,6 +34,10 @@ public class Report {
 
     private String generatedBy;
 
+    @Lob
+    @Column(name = "file_data")
+    private byte[] fileData;
+
     @PrePersist
     public void onCreate() {
         generatedAt = LocalDateTime.now();

@@ -19,4 +19,5 @@ public class ReportDTO {
     private String filePath;
     private String status;
     private String generatedBy;
+    private byte[] fileData;
 }

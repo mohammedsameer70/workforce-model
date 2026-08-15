@@ -486,6 +486,25 @@
             </p>
 
           </div>
+          <div class="actions pt-3">
+            <button
+                class="predict-btn"
+                @click="predict"
+                :disabled="!predictionFile || isPredicting"
+            >
+
+              <i class="pi pi-play"></i>
+
+              {{
+                isPredicting
+                    ? "Predicting..."
+                    : "Predict"
+              }}
+
+            </button>
+
+          </div>
+        </div>
 
           <div
               v-if="isPredicting"
@@ -507,25 +526,9 @@
 
             </div>
 
+
           </div>
 
-          <button
-              class="predict-btn"
-              @click="predict"
-              :disabled="!predictionFile || isPredicting"
-          >
-
-            <i class="pi pi-play"></i>
-
-            {{
-              isPredicting
-                  ? "Predicting..."
-                  : "Predict"
-            }}
-
-          </button>
-
-        </div>
 
       </div>
 
@@ -943,6 +946,8 @@ const getMetricIcon = (title: string) => {
   if (/rmse|error|loss/i.test(title)) return "pi pi-chart-bar";
   if (/status|ready|complete|pending/i.test(title)) return "pi pi-check-circle";
   if (/alert|critical|uptime/i.test(title)) return "pi pi-exclamation-triangle";
+  if (/model|name/i.test(title)) return "pi pi-database";
+  if (/prediction|total/i.test(title)) return "pi pi-list";
   return "pi pi-chart-line";
 };
 
@@ -1098,7 +1103,23 @@ const loadFromDatabase = async () => {
         maximumPrediction: latestPrediction.maximum_prediction || 0,
         minimumPrediction: latestPrediction.minimum_prediction || 0
       };
+      // Save to localStorage as backup
+      localStorage.setItem('predictionData', JSON.stringify({
+        results: latestPrediction.results,
+        metadata: predictionMetadata.value,
+        summary: predictionSummary.value
+      }));
       console.log("Loaded prediction data from database");
+    } else {
+      // Try loading from localStorage if database is empty
+      const savedPrediction = localStorage.getItem('predictionData');
+      if (savedPrediction) {
+        const data = JSON.parse(savedPrediction);
+        predictionResults.value = data.results;
+        predictionMetadata.value = data.metadata;
+        predictionSummary.value = data.summary;
+        console.log("Loaded prediction data from localStorage");
+      }
     }
 
     // Load latest model from database
@@ -1143,7 +1164,23 @@ const loadFromDatabase = async () => {
           actions: ["view", "download", "delete"]
         });
       }
+      // Save to localStorage as backup
+      localStorage.setItem('trainingData', JSON.stringify({
+        result: trainingResult.value,
+        status: trainingStatus.value,
+        history: trainingHistory.value
+      }));
       console.log("Loaded model data from database");
+    } else {
+      // Try loading from localStorage if database is empty
+      const savedTraining = localStorage.getItem('trainingData');
+      if (savedTraining) {
+        const data = JSON.parse(savedTraining);
+        trainingResult.value = data.result;
+        trainingStatus.value = data.status;
+        trainingHistory.value = data.history;
+        console.log("Loaded training data from localStorage");
+      }
     }
 
     // Load model comparisons from database
@@ -1161,7 +1198,26 @@ const loadFromDatabase = async () => {
       console.log("Loaded model comparisons from database");
     }
   } catch (error) {
-    console.log("No previous data found in database:", error);
+    console.error("Failed to load from database, trying localStorage:", error);
+    // Fallback to localStorage if database fails
+    try {
+      const savedPrediction = localStorage.getItem('predictionData');
+      if (savedPrediction) {
+        const data = JSON.parse(savedPrediction);
+        predictionResults.value = data.results;
+        predictionMetadata.value = data.metadata;
+        predictionSummary.value = data.summary;
+      }
+      const savedTraining = localStorage.getItem('trainingData');
+      if (savedTraining) {
+        const data = JSON.parse(savedTraining);
+        trainingResult.value = data.result;
+        trainingStatus.value = data.status;
+        trainingHistory.value = data.history;
+      }
+    } catch (e) {
+      console.error("Failed to load from localStorage:", e);
+    }
   }
 };
 
@@ -1686,7 +1742,7 @@ const drawDataComparisonChart = async () => {
 
     dataComparisonLabels.value = Array.from(
         { length: Math.max(rawDatasetValues.value.length, cleanedDatasetValues.value.length) },
-        (_, index) => `Record ${index + 1}`
+        (_, index) => `Row ${index + 1}`
     );
 
     dataComparisonChart = new Chart(canvas, {
@@ -2000,6 +2056,13 @@ const trainModel = async () => {
         await fetchDashboardMetrics();
         aiModelReady.value = true;
 
+        // Save training data to localStorage
+        localStorage.setItem('trainingData', JSON.stringify({
+          result: trainingResult.value,
+          status: trainingStatus.value,
+          history: trainingHistory.value
+        }));
+
         toast.add({
             severity: 'success',
             summary: 'Training Successful',
@@ -2214,6 +2277,13 @@ const predict = async () => {
 
         await fetchDashboardMetrics();
         aiModelReady.value = true;
+
+        // Save prediction data to localStorage
+        localStorage.setItem('predictionData', JSON.stringify({
+          results: predictionResults.value,
+          metadata: predictionMetadata.value,
+          summary: predictionSummary.value
+        }));
 
         toast.add({
             severity: 'success',

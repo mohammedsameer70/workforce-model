@@ -4,6 +4,13 @@
     <p>{{ lbl.operationsCommandCenterDesc }}</p>
   </div>
 
+  <div v-if="loading" class="page-loading-overlay">
+    <div class="page-loading-panel">
+      <div class="page-loading-spinner"></div>
+      <div>Loading dashboard data...</div>
+    </div>
+  </div>
+
   <!-- KPI CARDS -->
   <div class="cardsInfo">
     <div class="card" v-for="metric in metrics" :key="metric.title">
@@ -257,7 +264,7 @@ const metrics = ref([
     value: 'Loading...',
     change: '0%',
     rating: 'medium',
-    icon: 'pi pi-exclamation-triangle',
+    icon: 'pi pi-list',
   },
   {
     title: 'Average Demand',
@@ -274,16 +281,26 @@ const metrics = ref([
     icon: 'pi pi-cog',
   },
   {
+    title: 'Model Name',
+    value: 'Loading...',
+    change: '',
+    rating: 'medium',
+    icon: 'pi pi-database',
+  },
+  {
     title: 'R² Score',
     value: 'Loading...',
     change: '0%',
     rating: 'medium',
     icon: 'pi pi-chart-bar',
   },
-  { title: 'RMSE', value: 'Loading...', change: '', rating: 'medium', icon: 'pi pi-wifi' },
+  { title: 'RMSE', value: 'Loading...', change: '', rating: 'medium', icon: 'pi pi-chart-bar' },
 ])
 
+const loading = ref(true)
+
 const fetchDashboardMetrics = async () => {
+  loading.value = true
   try {
     const response = await CLDashboardService.getDashboardData()
     console.log('Dashboard response:', response)
@@ -319,7 +336,7 @@ const fetchDashboardMetrics = async () => {
           value: backendMetrics['Total Predictions'] || 'N/A',
           change: '0%',
           rating: 'medium',
-          icon: 'pi pi-exclamation-triangle',
+          icon: 'pi pi-list',
         },
         {
           title: 'Average Demand',
@@ -336,6 +353,13 @@ const fetchDashboardMetrics = async () => {
           icon: 'pi pi-cog',
         },
         {
+          title: 'Model Name',
+          value: backendMetrics['Model Name'] || 'Not Trained',
+          change: '',
+          rating: 'medium',
+          icon: 'pi pi-database',
+        },
+        {
           title: 'R² Score',
           value: backendMetrics['R² Score'] || 'N/A',
           change: '0%',
@@ -347,7 +371,7 @@ const fetchDashboardMetrics = async () => {
           value: backendMetrics['RMSE'] || 'N/A', 
           change: '', 
           rating: 'medium', 
-          icon: 'pi pi-wifi' 
+          icon: 'pi pi-chart-bar' 
         },
       ]
     } else {
@@ -379,6 +403,8 @@ const fetchDashboardMetrics = async () => {
   } catch (error) {
     console.error('Failed to fetch dashboard metrics:', error)
     // Keep default values on error
+  } finally {
+    loading.value = false
   }
 }
 

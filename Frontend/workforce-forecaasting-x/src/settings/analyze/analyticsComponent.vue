@@ -29,7 +29,14 @@
         optionLabel="label"
         optionValue="value"
         fluid
-      />
+      >
+        <template #option="slotProps">
+          <div class="tab-option">
+            <i :class="slotProps.option.icon"></i>
+            <span>{{ slotProps.option.label }}</span>
+          </div>
+        </template>
+      </SelectButton>
     </div>
     <Panel v-if="r_selectTab === 0" :header="lbl.productuctTitle" class="mb-4">
       <div class="departmentSection">
@@ -135,14 +142,17 @@ const options = [
   {
     label: lbl.performance,
     value: 0,
+    icon: 'pi pi-chart-line'
   },
   {
     label: lbl.throughout,
     value: 1,
+    icon: 'pi pi-arrow-right-arrow-left'
   },
   {
     label: lbl.distribution,
     value: 2,
+    icon: 'pi pi-chart-pie'
   },
 ]
 const metrics = ref<AnalyticsMetricDTO[]>([])

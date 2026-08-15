@@ -53,7 +53,7 @@ public class DashboardController {
                 // Calculate accuracy (simplified)
                 double accuracy = 100 - (Math.abs(avgPredicted - avgHistorical) / avgHistorical * 100);
                 
-                metrics.put("Best Model", "Trained Model");
+                metrics.put("Model Name", "Trained Model");
                 metrics.put("R² Score", String.format("%.4f", 0.85 + (Math.random() * 0.1)));
                 metrics.put("RMSE", String.format("%.4f", avgPredicted * 0.1));
                 metrics.put("Status", "Active");
@@ -108,7 +108,7 @@ public class DashboardController {
                 charts.put("barChart", barChartData);
 
             } else {
-                metrics.put("Best Model", "Awaiting training");
+                metrics.put("Model Name", "Not Trained");
                 metrics.put("R² Score", "Pending");
                 metrics.put("RMSE", "Pending");
                 metrics.put("Status", "Ready to train");
@@ -121,7 +121,7 @@ public class DashboardController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            metrics.put("Best Model", "Error loading data");
+            metrics.put("Model Name", "Error loading data");
             metrics.put("R² Score", "Error");
             metrics.put("RMSE", "Error");
             metrics.put("Status", "Error");

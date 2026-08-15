@@ -17,7 +17,7 @@ const toggleMenu = () => {
 const items = ref([
   { label: lbl.DASHBOARD, icon: 'pi pi-desktop', route: '/dashboard' },
   { label: lbl.FORECASTING, icon: 'pi pi-chart-line', route: '/forecasting' },
-  { label: lbl.AI_MODELS, icon: 'pi pi-brain', route: '/ai-models' },
+  { label: lbl.AI_MODELS, icon: 'pi pi-microchip', route: '/ai-models' },
   { label: lbl.SHIFTOPTIMIZATION, icon: 'pi pi-calendar-clock', route: '/shiftoptimization' },
   { label: lbl.EMPLOYEES, icon: 'pi pi-users', route: '/employees' },
   { label: lbl.ANALYTICS, icon: 'pi pi-chart-scatter', route: '/analytics' },
@@ -101,8 +101,8 @@ const handleNavigation = (itemRoute: string) => {
 .sidebar {
   width: 260px;
   height: 100vh;
-  background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   transition: width 0.25s ease;
@@ -127,13 +127,13 @@ const handleNavigation = (itemRoute: string) => {
   flex-direction: column;
   font-size: 13px;
   font-weight: 700;
-  color: white;
+  color: #1f2937;
 }
 
 .title span {
   font-size: 11px;
   font-weight: 400;
-  color: #94a3b8;
+  color: #6b7280;
 }
 
 /* ICON */
@@ -164,15 +164,15 @@ const handleNavigation = (itemRoute: string) => {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  color: #cbd5e1;
+  color: #4b5563;
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .menu-item:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
+  background: rgba(34, 197, 94, 0.08);
+  color: #1f2937;
 }
 
 .menu-item.active {
@@ -213,8 +213,8 @@ const handleNavigation = (itemRoute: string) => {
   right: 10px;
   width: 34px;
   height: 34px;
-  background: #1f2937;
-  color: white;
+  background: #e5e7eb;
+  color: #4b5563;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -225,6 +225,6 @@ const handleNavigation = (itemRoute: string) => {
 
 .toggle-btn:hover {
   background: #22c55e;
-  color: black;
+  color: white;
 }
 </style>

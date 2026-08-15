@@ -5,6 +5,8 @@ import com.boostphysioclinic.workforceapplication.dto.ReportDTO;
 import com.boostphysioclinic.workforceapplication.service.ReportService;
 import com.boostphysioclinic.workforceapplication.service.ReportsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +40,22 @@ public class ReportController {
         return reportService.getReportById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadReport(@PathVariable Long id) {
+        ReportDTO report = reportsService.getReports().stream()
+                .filter(r -> r.getId().equals(id.intValue()))
+                .findFirst()
+                .orElse(null);
+        
+        if (report != null && report.getFileData() != null) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + report.getName() + ".txt\"")
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(report.getFileData());
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping

@@ -16,7 +16,14 @@
 
     <!-- Tabs -->
     <div class="tabsWrapper">
-      <SelectButton v-model="selectedTab" :options="tabs" />
+      <SelectButton v-model="selectedTab" :options="tabs">
+        <template #option="slotProps">
+          <div class="tab-option">
+            <i :class="slotProps.option.icon"></i>
+            <span>{{ slotProps.option.label }}</span>
+          </div>
+        </template>
+      </SelectButton>
     </div>
 
     <div v-if="loading" class="page-loading-overlay">
@@ -63,7 +70,13 @@ import NotificationService from './notificationService'
 import type { NotificationDTO } from './notificationService'
 
 const selectedTab = ref('All')
-const tabs = ['All', 'Unread', 'Critical', 'Warnings', 'Info']
+const tabs = [
+  { label: 'All', icon: 'pi pi-inbox' },
+  { label: 'Unread', icon: 'pi pi-envelope' },
+  { label: 'Critical', icon: 'pi pi-exclamation-triangle' },
+  { label: 'Warnings', icon: 'pi pi-exclamation-circle' },
+  { label: 'Info', icon: 'pi pi-info-circle' }
+]
 const notifications = ref<NotificationDTO[]>([])
 const loading = ref(false)
 const error = ref('')

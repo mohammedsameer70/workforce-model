@@ -25,7 +25,14 @@
       fluid
       :disabled="!canToggleTabs"
       :unselectable="false"
-    />
+    >
+      <template #option="slotProps">
+        <div class="tab-option">
+          <i :class="slotProps.option.icon"></i>
+          <span>{{ slotProps.option.label }}</span>
+        </div>
+      </template>
+    </SelectButton>
     <div v-if="!canToggleTabs" class="forecasting-tabbar-help">
       <small>
         Forecast tabs are disabled until the AI model has finished training and data is loaded.
@@ -168,10 +175,12 @@ const options = [
   {
     label: lbl.twoFourhours,
     value: 0,
+    icon: 'pi pi-clock'
   },
   {
     label: lbl.weeklyForeCast,
     value: 1,
+    icon: 'pi pi-calendar'
   },
 ]
 

@@ -181,7 +181,7 @@
                 <div class="recommendation-header">
                   <div class="title-section">
                     <div class="ai-icon">
-                      <i class="pi pi-sparkles"></i>
+                      <i class="pi pi-bolt"></i>
                     </div>
 
                     <div>
@@ -234,42 +234,55 @@
   </div>
   <Panel header="Add Shift Allocation" class="mb-4">
     <div class="allocationForm">
-      <div class="formRow">
-        <label>
-          Department
-          <input v-model="allocationForm.department" type="text" placeholder="Department name" />
-        </label>
+      <div class="formGrid">
+        <div class="formField">
+          <label>Department</label>
+          <InputText v-model="allocationForm.department" placeholder="Enter department name" fluid />
+        </div>
 
-        <label>
-          Time Slot
-          <select v-model="allocationForm.timeSlot">
-            <option>Morning</option>
-            <option>Afternoon</option>
-            <option>Night</option>
-          </select>
-        </label>
+        <div class="formField">
+          <label>Time Slot</label>
+          <Dropdown 
+            v-model="allocationForm.timeSlot" 
+            :options="timeSlotOptions" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select time slot"
+            fluid 
+          />
+        </div>
 
-        <label>
-          Day of Week
-          <input v-model="allocationForm.dayOfWeek" type="text" placeholder="Monday" />
-        </label>
+        <div class="formField">
+          <label>Day of Week</label>
+          <Dropdown 
+            v-model="allocationForm.dayOfWeek" 
+            :options="dayOptions" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select day"
+            fluid 
+          />
+        </div>
 
-        <label>
-          Staffing Level
-          <input v-model.number="allocationForm.staffingLevel" type="number" min="0" />
-        </label>
+        <div class="formField">
+          <label>Staffing Level</label>
+          <InputNumber 
+            v-model="allocationForm.staffingLevel" 
+            :min="0" 
+            placeholder="Number of staff"
+            fluid 
+          />
+        </div>
       </div>
 
       <div class="formActions">
-        <button
-          type="button"
-          class="primaryButton"
-          :disabled="creatingAllocation"
+        <Button 
+          label="Add Shift Allocation" 
+          icon="pi pi-plus" 
+          :loading="creatingAllocation"
           @click="submitShiftAllocation"
-        >
-          {{ creatingAllocation ? 'Saving...' : 'Add Shift Allocation' }}
-        </button>
-        <span class="formMessage" v-if="allocationError">{{ allocationError }}</span>
+        />
+        <Message v-if="allocationError" severity="error">{{ allocationError }}</Message>
       </div>
     </div>
   </Panel>
@@ -310,6 +323,10 @@ import Card from 'primevue/card'
 import Tag from 'primevue/tag'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Dropdown from 'primevue/dropdown'
+import Message from 'primevue/message'
 import { lbl } from '@/assets/constants/labels'
 import ShiftOptimizationService from './shiftOptimizationService'
 import type {
@@ -326,6 +343,22 @@ import type {
   OptimizationRecommendationDTO,
 } from './shiftOptimizationService'
 
+const timeSlotOptions = [
+  { label: 'Morning (06:00-14:00)', value: 'Morning' },
+  { label: 'Afternoon (14:00-22:00)', value: 'Afternoon' },
+  { label: 'Night (22:00-06:00)', value: 'Night' }
+]
+
+const dayOptions = [
+  { label: 'Monday', value: 'Monday' },
+  { label: 'Tuesday', value: 'Tuesday' },
+  { label: 'Wednesday', value: 'Wednesday' },
+  { label: 'Thursday', value: 'Thursday' },
+  { label: 'Friday', value: 'Friday' },
+  { label: 'Saturday', value: 'Saturday' },
+  { label: 'Sunday', value: 'Sunday' }
+]
+
 const metrics = ref<ShiftMetricDTO[]>([])
 const barChartData = ref<any>({ labels: [], datasets: [] })
 const barChartOptions = ref<any>({})
@@ -333,7 +366,7 @@ const coverageData = ref<ShiftCoverageDTO[]>([])
 const recommendations = ref<ShiftRecommendationDTO[]>([])
 const allocationForm = ref<ShiftAllocationDTO>({
   department: '',
-  timeSlot: 'Morning',
+  timeSlot: '',
   dayOfWeek: '',
   staffingLevel: 0,
 })
@@ -406,7 +439,7 @@ const dismissRecommendation = (id: number) => {
 const resetAllocationForm = () => {
   allocationForm.value = {
     department: '',
-    timeSlot: 'Morning',
+    timeSlot: '',
     dayOfWeek: '',
     staffingLevel: 0,
   }

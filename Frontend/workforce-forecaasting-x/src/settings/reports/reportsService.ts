@@ -99,6 +99,13 @@ class ReportsService {
       status: response.data.status ?? 'Pending',
     }
   }
+
+  async downloadReport(id: string): Promise<Blob> {
+    const response = await api.get(`/reports/${id}/download`, {
+      responseType: 'blob'
+    })
+    return response.data
+  }
 }
 
 export default new ReportsService()

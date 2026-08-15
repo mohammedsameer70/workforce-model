@@ -76,8 +76,8 @@ const showSidebar = computed(() => {
   height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
-  background-color: #0b0f1a;
-  border-right: 1px solid #1a1f2e;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
   overflow: hidden;
 }
 
@@ -90,12 +90,12 @@ const showSidebar = computed(() => {
 }
 
 .sideBar::-webkit-scrollbar-thumb {
-  background: #2a2f3f;
+  background: #d1d5db;
   border-radius: 3px;
 }
 
 .sideBar::-webkit-scrollbar-thumb:hover {
-  background: #3a3f4f;
+  background: #9ca3af;
 }
 
 .content {
@@ -104,14 +104,6 @@ const showSidebar = computed(() => {
   overflow-x: hidden;
   padding: 2rem;
   height: calc(100vh - 70px);
-}
-
-.content[data-theme='dark'] {
-  background-color: #0f1419;
-  color: #e5e7eb;
-}
-
-.content[data-theme='light'] {
   background-color: #f9fafb;
   color: #1f2937;
 }
@@ -129,22 +121,16 @@ const showSidebar = computed(() => {
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: #4a5568;
+  background: #d1d5db;
   border-radius: 4px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: #5a6578;
+  background: #9ca3af;
 }
 :root {
     --app-bg: #ffffff;
     --content-bg: #f8fafc;
     --text-color: #1f2937;
-}
-
-.dark {
-    --app-bg: #0f172a;
-    --content-bg: #111827;
-    --text-color: #f8fafc;
 }
 </style>
