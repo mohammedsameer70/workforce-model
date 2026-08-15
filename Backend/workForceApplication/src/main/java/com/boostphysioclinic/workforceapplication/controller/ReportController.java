@@ -1,7 +1,9 @@
 package com.boostphysioclinic.workforceapplication.controller;
 
 import com.boostphysioclinic.workforceapplication.dto.entity.Report;
+import com.boostphysioclinic.workforceapplication.dto.ReportDTO;
 import com.boostphysioclinic.workforceapplication.service.ReportService;
+import com.boostphysioclinic.workforceapplication.service.ReportsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +16,11 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService reportService;
+    private final ReportsService reportsService;
 
     @GetMapping
-    public List<Report> getAllReports() {
-        return reportService.getAllReports();
+    public List<ReportDTO> getAllReports() {
+        return reportsService.getReports();
     }
 
     @GetMapping("/type/{type}")
@@ -40,6 +43,11 @@ public class ReportController {
     @PostMapping
     public Report createReport(@RequestBody Report report) {
         return reportService.createReport(report);
+    }
+
+    @PostMapping("/generate")
+    public ReportDTO generateReport(@RequestParam String type) {
+        return reportsService.generateReport(type);
     }
 
     @PutMapping("/{id}")

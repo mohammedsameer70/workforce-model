@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '@/services/apiClient';
 
 export interface BenchmarkMetricDTO {
   name: string;
@@ -26,12 +26,10 @@ export interface ExperimentDTO {
   endDate?: string;
 }
 
-const API_BASE_URL = 'http://localhost:5233/api/benchmark';
-
 class BenchmarkService {
   async getMetrics(): Promise<BenchmarkMetricDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/metrics`);
+      const response = await api.get<BenchmarkMetricDTO[]>('/benchmark/metrics');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch metrics:', error);
@@ -41,7 +39,7 @@ class BenchmarkService {
 
   async getLatencySeries(): Promise<LatencyPointDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/latency`);
+      const response = await api.get<LatencyPointDTO[]>('/benchmark/latency');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch latency series:', error);
@@ -51,7 +49,7 @@ class BenchmarkService {
 
   async getVersionHistory(): Promise<VersionHistoryDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/versions`);
+      const response = await api.get<VersionHistoryDTO[]>('/benchmark/versions');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch version history:', error);
@@ -61,7 +59,7 @@ class BenchmarkService {
 
   async getExperiments(): Promise<ExperimentDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/experiments`);
+      const response = await api.get<ExperimentDTO[]>('/benchmark/experiments');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch experiments:', error);

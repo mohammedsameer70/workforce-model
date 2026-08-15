@@ -156,6 +156,10 @@ const loadCapacityData = async () => {
     departments.value = departmentsResponse
     capacityChartData.value = buildCapacityChart(trendResponse)
     benchmarkChartData.value = buildBenchmarkChart(benchmarkResponse)
+    
+    // Set chart options after data is loaded to prevent canvas null error
+    capacityChartOptions.value = buildLineOptions()
+    benchmarkChartOptions.value = buildBarOptions()
   } catch (err) {
     console.error('Failed to load capacity planning data', err)
     error.value = 'Unable to load capacity planning data.'
@@ -166,8 +170,6 @@ const loadCapacityData = async () => {
 
 onMounted(() => {
   loadCapacityData()
-  capacityChartOptions.value = buildLineOptions()
-  benchmarkChartOptions.value = buildBarOptions()
 })
 
 const buildCapacityChart = (items: TimeSeriesDTO[]) => ({

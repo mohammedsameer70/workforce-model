@@ -84,6 +84,21 @@ class ReportsService {
       status: item.status ?? 'Pending',
     }))
   }
+
+  async generateReport(type: string): Promise<ReportDTO> {
+    const response = await api.post<ReportBackendDTO>('/reports/generate', null, {
+      params: { type }
+    })
+
+    return {
+      id: response.data.id.toString(),
+      report: response.data.name ?? 'Unnamed Report',
+      type: response.data.type ?? 'Unknown',
+      generated: response.data.generatedAt ?? 'Unknown',
+      size: formatFileSize(response.data.fileSize ?? 0),
+      status: response.data.status ?? 'Pending',
+    }
+  }
 }
 
 export default new ReportsService()

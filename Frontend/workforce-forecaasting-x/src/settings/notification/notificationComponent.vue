@@ -8,9 +8,9 @@
       </div>
 
       <div class="headerActions">
-        <Tag value="3 unread" severity="info" />
+        <Tag :value="`${unreadCount} unread`" severity="info" />
 
-        <Button icon="pi pi-check" label="Mark All Read" outlined />
+        <Button icon="pi pi-check" label="Mark All Read" outlined @click="markAllAsRead" :disabled="unreadCount === 0" />
       </div>
     </div>
 
@@ -79,6 +79,19 @@ const loadNotifications = async () => {
     error.value = 'Unable to load notifications.'
   } finally {
     loading.value = false
+  }
+}
+
+const unreadCount = computed(() => {
+  return notifications.value.filter((n) => n.unread).length
+})
+
+const markAllAsRead = async () => {
+  try {
+    await NotificationService.markAllAsRead()
+    await loadNotifications()
+  } catch (err) {
+    console.error('Failed to mark all as read', err)
   }
 }
 

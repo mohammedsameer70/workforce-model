@@ -157,6 +157,10 @@ const loadBenchmarkData = async () => {
     latencyChartData.value = buildLatencyChart(latencyResponse)
     versionChartData.value = buildVersionChart(versionResponse)
     experiments.value = experimentResponse
+    
+    // Set chart options after data is loaded to prevent canvas null error
+    lineChartOptions.value = buildLineOptions()
+    barChartOptions.value = buildBarOptions()
   } catch (err) {
     console.error('Failed to load benchmark data', err)
     error.value = 'Unable to load benchmark data.'
@@ -167,12 +171,10 @@ const loadBenchmarkData = async () => {
 
 onMounted(() => {
   loadBenchmarkData()
-  lineChartOptions.value = buildLineOptions()
-  barChartOptions.value = buildBarOptions()
 })
 
 const buildLatencyChart = (items: LatencyPointDTO[]) => ({
-  labels: items.map((item) => item.label),
+  labels: items.map((item) => item.timestamp),
   datasets: [
     {
       label: 'P50 (ms)',
@@ -185,13 +187,13 @@ const buildLatencyChart = (items: LatencyPointDTO[]) => ({
 })
 
 const buildVersionChart = (items: VersionHistoryDTO[]) => ({
-  labels: items.map((item) => item.label),
+  labels: items.map((item) => item.version),
   datasets: [
     {
-      label: 'Throughput (req/s)',
+      label: 'Score',
       backgroundColor: '#00B2FF',
       borderRadius: 8,
-      data: items.map((item) => item.throughput),
+      data: items.map((item) => item.score),
     },
   ],
 })

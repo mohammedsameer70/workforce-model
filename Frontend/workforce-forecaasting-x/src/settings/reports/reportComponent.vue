@@ -7,7 +7,7 @@
         <p>Generated reports, exports, and analytical summaries</p>
       </div>
 
-      <Button icon="pi pi-file-export" label="Generate Report" />
+      <Button icon="pi pi-file-export" label="Generate Report" @click="generateReport" />
     </div>
 
     <!-- KPI Cards -->
@@ -106,6 +106,21 @@ const loadReports = async () => {
     error.value = 'Unable to load reports.'
   } finally {
     loading.value = false
+  }
+}
+
+const generateReport = async () => {
+  const reportTypes = ['Analytics', 'Performance', 'Attendance', 'Optimization', 'Forecast']
+  const randomType = reportTypes[Math.floor(Math.random() * reportTypes.length)]
+  
+  try {
+    const newReport = await ReportsService.generateReport(randomType)
+    reports.value.unshift(newReport)
+    
+    // Refresh metrics
+    metrics.value = await ReportsService.getReportMetrics()
+  } catch (err) {
+    console.error('Failed to generate report', err)
   }
 }
 

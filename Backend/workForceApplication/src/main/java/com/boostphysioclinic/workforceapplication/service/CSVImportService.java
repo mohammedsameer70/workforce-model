@@ -388,12 +388,10 @@ public class CSVImportService {
                                          * The cleaned CSV does not
                                          * contain an employee name.
                                          *
-                                         * Therefore we use Employee ID
-                                         * as a temporary display name.
+                                         * Generate a realistic name based on employee ID.
                                          */
                                         .name(
-                                                "Employee "
-                                                        + employeeId
+                                                generateEmployeeName(employeeId)
                                         )
 
                                         .gender(
@@ -1651,24 +1649,32 @@ public class CSVImportService {
     ) {
 
         /*
-         * WorkforceStatus is column 48.
+         * Use AttendanceStatus (column 17) to determine if employee is active today.
+         * "Present" means they are Active, "Leave" means they are on Leave.
          */
-        String workforceStatus =
+        String attendanceStatus =
                 clean(
                         values[
-                                COL_WORKFORCE_STATUS
+                                COL_ATTENDANCE_STATUS
                                 ]
                 );
 
 
-        if (!workforceStatus.isEmpty()) {
+        if (!attendanceStatus.isEmpty()) {
 
-            return workforceStatus;
+            // Map attendance status to employee status
+            if (attendanceStatus.equalsIgnoreCase("Present")) {
+                return "Active";
+            } else if (attendanceStatus.equalsIgnoreCase("Leave")) {
+                return "Leave";
+            } else {
+                return "Active"; // Default to Active for other statuses
+            }
         }
 
 
         /*
-         * If WorkforceStatus is empty,
+         * If AttendanceStatus is empty,
          * use Active as the default.
          */
         return "Active";
@@ -1735,6 +1741,62 @@ public class CSVImportService {
 
             return null;
         }
+    }
+
+
+    // ============================================================
+    // EMPLOYEE NAME GENERATOR
+    // ============================================================
+
+    private String generateEmployeeName(String employeeId) {
+        // Extract numeric part from employee ID for consistent name generation
+        String numericPart = employeeId.replaceAll("[^0-9]", "");
+        if (numericPart.isEmpty()) {
+            numericPart = "0";
+        }
+        
+        int hash = Math.abs(numericPart.hashCode());
+        
+        String[] firstNames = {
+            "James", "Mary", "Robert", "Patricia", "John", "Jennifer", 
+            "Michael", "Linda", "David", "Elizabeth", "William", "Barbara",
+            "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah",
+            "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
+            "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra",
+            "Donald", "Ashley", "Steven", "Dorothy", "Paul", "Emily",
+            "Andrew", "Donna", "Joshua", "Michelle", "Kenneth", "Carol",
+            "Kevin", "Amanda", "Brian", "Melissa", "George", "Deborah",
+            "Edward", "Stephanie", "Ronald", "Rebecca", "Timothy", "Sharon",
+            "Jason", "Laura", "Jeffrey", "Cynthia", "Ryan", "Kathleen",
+            "Jacob", "Amy", "Gary", "Shirley", "Nicholas", "Angela",
+            "Eric", "Helen", "Jonathan", "Anna", "Stephen", "Brenda",
+            "Larry", "Pamela", "Justin", "Emma", "Scott", "Olivia",
+            "Brandon", "Samantha", "Benjamin", "Katherine", "Samuel", "Christine",
+            "Gregory", "Debra", "Frank", "Rachel", "Alexander", "Carolyn",
+            "Raymond", "Janet", "Patrick", "Catherine", "Jack", "Maria"
+        };
+        
+        String[] lastNames = {
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia",
+            "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez",
+            "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore",
+            "Jackson", "Martin", "Lee", "Perez", "Thompson", "White",
+            "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
+            "Walker", "Young", "Allen", "King", "Wright", "Scott",
+            "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams",
+            "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
+            "Carter", "Roberts", "Gomez", "Phillips", "Evans", "Turner",
+            "Diaz", "Parker", "Cruz", "Edwards", "Collins", "Reyes",
+            "Stewart", "Morris", "Morales", "Murphy", "Cook", "Rogers",
+            "Gutierrez", "Ortiz", "Morgan", "Cooper", "Peterson", "Bailey",
+            "Reed", "Kelly", "Howard", "Ramos", "Kim", "Chavez",
+            "Stanley", "Chambers", "Tucker", "Fox", "Wood", "Wright"
+        };
+        
+        String firstName = firstNames[hash % firstNames.length];
+        String lastName = lastNames[(hash / firstNames.length) % lastNames.length];
+        
+        return firstName + " " + lastName;
     }
 
 

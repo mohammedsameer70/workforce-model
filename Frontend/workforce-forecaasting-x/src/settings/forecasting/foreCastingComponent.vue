@@ -70,56 +70,6 @@
     </div>
   </Panel>
 
-  <!-- ADD SHIFT ALLOCATION -->
-  <div class="shift-allocation-panel">
-    <div class="shift-allocation-header">
-      <h3>Add Shift Allocation</h3>
-      <p class="small-muted">Quickly add staffing for a department/time slot</p>
-    </div>
-
-    <div class="shift-allocation-grid">
-      <label>
-        Department
-        <select v-model="sa_department">
-          <option disabled value="">Select department</option>
-          <option v-for="d in staffingData" :key="d.department" :value="d.department">{{ d.department }}</option>
-        </select>
-      </label>
-
-      <label>
-        Time Slot
-        <select v-model="sa_timeSlot">
-          <option value="Morning">Morning</option>
-          <option value="Afternoon">Afternoon</option>
-          <option value="Night">Night</option>
-        </select>
-      </label>
-
-      <label>
-        Day of Week
-        <select v-model="sa_day">
-          <option value="Monday">Monday</option>
-          <option value="Tuesday">Tuesday</option>
-          <option value="Wednesday">Wednesday</option>
-          <option value="Thursday">Thursday</option>
-          <option value="Friday">Friday</option>
-          <option value="Saturday">Saturday</option>
-          <option value="Sunday">Sunday</option>
-        </select>
-      </label>
-
-      <label>
-        Staffing Level
-        <input type="number" min="0" v-model.number="sa_level" />
-      </label>
-
-      <div class="shift-allocation-actions">
-        <button class="btn btn-secondary" @click="resetShiftForm">Reset</button>
-        <button class="btn btn-primary" @click="addShiftAllocation">Add Allocation</button>
-      </div>
-    </div>
-  </div>
-
   <!-- STAFFING TABLE -->
   <div class="flex flex-row w-full">
     <Panel header="Department Staffing Heatmap" class="mb-4 w-full">
@@ -171,7 +121,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 
 import Chart from 'primevue/chart'
 import Panel from 'primevue/panel'
@@ -235,38 +185,7 @@ const radarChartOptions = ref<any>({})
 const staffingData = ref<StaffingHeatmapDTO[]>([])
 const loading = ref(true)
 const error = ref('')
-
-// Shift allocation form state
-const sa_department = ref('')
-const sa_timeSlot = ref('Morning')
-const sa_day = ref('Monday')
-const sa_level = ref(0)
-
-const resetShiftForm = () => {
-  sa_department.value = ''
-  sa_timeSlot.value = 'Morning'
-  sa_day.value = 'Monday'
-  sa_level.value = 0
-}
-
-const addShiftAllocation = () => {
-  if (!sa_department.value) return
-
-  // Find or create department row
-  let row = staffingData.value.find((r: any) => r.department === sa_department.value)
-  if (!row) {
-    row = { department: sa_department.value, morning: 0, afternoon: 0, night: 0, total: 0 }
-    staffingData.value.push(row)
-  }
-
-  if (sa_timeSlot.value === 'Morning') row.morning = Number(sa_level.value)
-  else if (sa_timeSlot.value === 'Afternoon') row.afternoon = Number(sa_level.value)
-  else row.night = Number(sa_level.value)
-
-  row.total = (Number(row.morning) || 0) + (Number(row.afternoon) || 0) + (Number(row.night) || 0)
-
-  resetShiftForm()
-}
+let refreshInterval: number | null = null
 
 const canToggleTabs = computed(() => !loading.value && aiModelReady.value)
 watch(r_selectTab, (val) => {
@@ -312,6 +231,18 @@ onMounted(() => {
   chartOptions.value = setChartOptions()
   barChartOptions.value = setBarChartOptions()
   radarChartOptions.value = setRadarChartOptions()
+
+  // Set up real-time refresh every 30 seconds
+  refreshInterval = window.setInterval(() => {
+    loadForecastingData()
+  }, 30000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
 })
 
 const buildLineChart = (items: ForecastTrendDTO[]) => {

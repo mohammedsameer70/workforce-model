@@ -1,16 +1,19 @@
-import axios from 'axios';
+import api from '@/services/apiClient';
 
 export interface AnalyticsMetricDTO {
-  name: string;
-  value: number;
-  change: number;
-  period: string;
+  title: string;
+  value: string;
+  icon?: string;
 }
 
-export interface TrendDataDTO {
-  date: string;
+export interface TimeSeriesPointDTO {
+  label: string;
   value: number;
-  category?: string;
+}
+
+export interface DepartmentDistributionDTO {
+  department: string;
+  value: number;
 }
 
 export interface AnalyticsFilterDTO {
@@ -19,12 +22,10 @@ export interface AnalyticsFilterDTO {
   team?: string;
 }
 
-const API_BASE_URL = 'http://localhost:5233/api/analytics';
-
 class AnalyticsService {
   async getMetrics(filters?: AnalyticsFilterDTO): Promise<AnalyticsMetricDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/metrics`, { params: filters });
+      const response = await api.get<AnalyticsMetricDTO[]>('/analytics/metrics', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch analytics metrics:', error);
@@ -32,9 +33,49 @@ class AnalyticsService {
     }
   }
 
-  async getTrendData(metric: string, filters?: AnalyticsFilterDTO): Promise<TrendDataDTO[]> {
+  async getHourlyThroughput(filters?: AnalyticsFilterDTO): Promise<TimeSeriesPointDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/trends/${metric}`, { params: filters });
+      const response = await api.get<TimeSeriesPointDTO[]>('/analytics/hourly-throughput', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch hourly throughput:', error);
+      return [];
+    }
+  }
+
+  async getDemandForecast(filters?: AnalyticsFilterDTO): Promise<TimeSeriesPointDTO[]> {
+    try {
+      const response = await api.get<TimeSeriesPointDTO[]>('/analytics/demand-forecast', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch demand forecast:', error);
+      return [];
+    }
+  }
+
+  async getDepartmentDistribution(filters?: AnalyticsFilterDTO): Promise<DepartmentDistributionDTO[]> {
+    try {
+      const response = await api.get<DepartmentDistributionDTO[]>('/analytics/department-distribution', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch department distribution:', error);
+      return [];
+    }
+  }
+
+  async getWeeklyComparison(filters?: AnalyticsFilterDTO): Promise<TimeSeriesPointDTO[]> {
+    try {
+      const response = await api.get<TimeSeriesPointDTO[]>('/analytics/weekly-comparison', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch weekly comparison:', error);
+      return [];
+    }
+  }
+
+  async getTrendData(metric: string, filters?: AnalyticsFilterDTO): Promise<any[]> {
+    try {
+      const response = await api.get(`/analytics/trends/${metric}`, { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch trend data:', error);
@@ -44,7 +85,7 @@ class AnalyticsService {
 
   async getDepartmentPerformance(filters?: AnalyticsFilterDTO): Promise<any[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/departments`, { params: filters });
+      const response = await api.get('/analytics/departments', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch department performance:', error);
@@ -54,7 +95,7 @@ class AnalyticsService {
 
   async getTeamPerformance(filters?: AnalyticsFilterDTO): Promise<any[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/teams`, { params: filters });
+      const response = await api.get('/analytics/teams', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch team performance:', error);
@@ -64,7 +105,7 @@ class AnalyticsService {
 
   async exportAnalytics(filters?: AnalyticsFilterDTO): Promise<Blob> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/export`, { 
+      const response = await api.get('/analytics/export', { 
         params: filters,
         responseType: 'blob'
       });

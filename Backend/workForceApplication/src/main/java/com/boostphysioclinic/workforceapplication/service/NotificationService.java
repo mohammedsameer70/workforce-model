@@ -5,6 +5,7 @@ import com.boostphysioclinic.workforceapplication.dto.entity.Notification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +14,61 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+
+    @PostConstruct
+    public void initializeSampleNotifications() {
+        if (notificationRepository.count() == 0) {
+            notificationRepository.save(Notification.builder()
+                    .title("System Update Completed")
+                    .message("The workforce forecasting model has been successfully updated to version 2.1")
+                    .type("info")
+                    .priority("low")
+                    .icon("pi pi-info-circle")
+                    .createdAt(LocalDateTime.now().minusMinutes(5))
+                    .isRead(false)
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .title("High Demand Alert")
+                    .message("Unexpected spike in demand detected for the Engineering department. Consider additional staffing.")
+                    .type("critical")
+                    .priority("high")
+                    .icon("pi pi-exclamation-triangle")
+                    .createdAt(LocalDateTime.now().minusHours(1))
+                    .isRead(false)
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .title("Shift Optimization Available")
+                    .message("New shift allocation recommendations are ready for review based on latest predictions.")
+                    .type("warning")
+                    .priority("medium")
+                    .icon("pi pi-clock")
+                    .createdAt(LocalDateTime.now().minusHours(3))
+                    .isRead(false)
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .title("Report Generated Successfully")
+                    .message("Monthly workforce analysis report has been generated and is ready for download.")
+                    .type("success")
+                    .priority("low")
+                    .icon("pi pi-check-circle")
+                    .createdAt(LocalDateTime.now().minusHours(5))
+                    .isRead(true)
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .title("CSV Import Completed")
+                    .message("Employee data import from CSV has been processed successfully. 150 records updated.")
+                    .type("info")
+                    .priority("low")
+                    .icon("pi pi-upload")
+                    .createdAt(LocalDateTime.now().minusDays(1))
+                    .isRead(true)
+                    .build());
+        }
+    }
 
     public List<Notification> getAllNotifications() {
         return notificationRepository.findAll();

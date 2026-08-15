@@ -176,6 +176,12 @@ const loadAnalyticsData = async () => {
     throughputChartData.value = buildLineChart(forecastResponse, 'Forecast')
     departmentChartData.value = buildDoughnutChart(distributionResponse)
     weeklyChartData.value = buildBarChart(weeklyResponse)
+    
+    // Set chart options after data is loaded to prevent canvas null error
+    chartOptions.value = buildLineOptions()
+    throughputChartOptions.value = buildLineOptions()
+    departmentChartOptions.value = buildDoughnutOptions()
+    weeklyChartOptions.value = buildBarOptions()
   } catch (err) {
     console.error('Failed to load analytics data', err)
     error.value = 'Unable to load analytics data.'
@@ -186,10 +192,6 @@ const loadAnalyticsData = async () => {
 
 onMounted(() => {
   loadAnalyticsData()
-  chartOptions.value = buildLineOptions()
-  throughputChartOptions.value = buildLineOptions()
-  departmentChartOptions.value = buildDoughnutOptions()
-  weeklyChartOptions.value = buildBarOptions()
 })
 
 const buildLineChart = (items: TimeSeriesPointDTO[], label: string) => {

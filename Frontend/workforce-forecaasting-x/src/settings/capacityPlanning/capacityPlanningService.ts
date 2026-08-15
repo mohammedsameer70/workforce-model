@@ -1,11 +1,27 @@
-import axios from 'axios';
+import api from '@/services/apiClient';
 
 export interface CapacityMetricDTO {
-  department: string;
-  currentCapacity: number;
-  requiredCapacity: number;
+  title: string;
+  value: string;
+  icon?: string;
+}
+
+export interface DepartmentCapacityDTO {
+  name: string;
   utilization: number;
-  status: 'under' | 'optimal' | 'over';
+  status: string;
+}
+
+export interface TimeSeriesDTO {
+  label: string;
+  utilization: number;
+  capacity: number;
+}
+
+export interface BenchmarkPointDTO {
+  label: string;
+  value: number;
+  target: number;
 }
 
 export interface CapacityForecastDTO {
@@ -22,7 +38,7 @@ export interface CapacityPlanDTO {
   startDate: string;
   endDate: string;
   status: 'draft' | 'active' | 'completed';
-  metrics: CapacityMetricDTO[];
+  metrics: any[];
 }
 
 export interface CapacityFilterDTO {
@@ -31,12 +47,50 @@ export interface CapacityFilterDTO {
   horizon: number;
 }
 
-const API_BASE_URL = 'http://localhost:5233/api/capacity';
-
 class CapacityPlanningService {
-  async getCurrentCapacity(filters?: CapacityFilterDTO): Promise<CapacityMetricDTO[]> {
+  async getMetrics(): Promise<CapacityMetricDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/current`, { params: filters });
+      const response = await api.get<CapacityMetricDTO[]>('/capacity/metrics');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch capacity metrics:', error);
+      return [];
+    }
+  }
+
+  async getCapacityTrend(): Promise<TimeSeriesDTO[]> {
+    try {
+      const response = await api.get<TimeSeriesDTO[]>('/capacity/trend');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch capacity trend:', error);
+      return [];
+    }
+  }
+
+  async getDepartments(): Promise<string[]> {
+    try {
+      const response = await api.get<string[]>('/capacity/departments');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+      return [];
+    }
+  }
+
+  async getBenchmark(): Promise<BenchmarkPointDTO[]> {
+    try {
+      const response = await api.get<BenchmarkPointDTO[]>('/capacity/benchmark');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch benchmark:', error);
+      return [];
+    }
+  }
+
+  async getCurrentCapacity(filters?: CapacityFilterDTO): Promise<any[]> {
+    try {
+      const response = await api.get('/capacity/current', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch current capacity:', error);
@@ -46,7 +100,7 @@ class CapacityPlanningService {
 
   async getCapacityForecast(filters?: CapacityFilterDTO): Promise<CapacityForecastDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/forecast`, { params: filters });
+      const response = await api.get('/capacity/forecast', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch capacity forecast:', error);
@@ -56,7 +110,7 @@ class CapacityPlanningService {
 
   async getCapacityPlans(): Promise<CapacityPlanDTO[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/plans`);
+      const response = await api.get('/capacity/plans');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch capacity plans:', error);
@@ -66,7 +120,7 @@ class CapacityPlanningService {
 
   async createCapacityPlan(plan: Omit<CapacityPlanDTO, 'id'>): Promise<CapacityPlanDTO> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/plans`, plan);
+      const response = await api.post('/capacity/plans', plan);
       return response.data;
     } catch (error) {
       console.error('Failed to create capacity plan:', error);
@@ -76,7 +130,7 @@ class CapacityPlanningService {
 
   async updateCapacityPlan(id: string, plan: Partial<CapacityPlanDTO>): Promise<CapacityPlanDTO> {
     try {
-      const response = await axios.put(`${API_BASE_URL}/plans/${id}`, plan);
+      const response = await api.put(`/capacity/plans/${id}`, plan);
       return response.data;
     } catch (error) {
       console.error('Failed to update capacity plan:', error);
@@ -86,7 +140,7 @@ class CapacityPlanningService {
 
   async deleteCapacityPlan(id: string): Promise<void> {
     try {
-      await axios.delete(`${API_BASE_URL}/plans/${id}`);
+      await api.delete(`/capacity/plans/${id}`);
     } catch (error) {
       console.error('Failed to delete capacity plan:', error);
       throw error;
@@ -95,7 +149,7 @@ class CapacityPlanningService {
 
   async optimizeCapacity(filters?: CapacityFilterDTO): Promise<any> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/optimize`, { filters });
+      const response = await api.post('/capacity/optimize', { filters });
       return response.data;
     } catch (error) {
       console.error('Failed to optimize capacity:', error);
