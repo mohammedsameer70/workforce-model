@@ -22,13 +22,21 @@ public class CLPredictionService {
 
         List<PredictionRecord> predictions = new ArrayList<>();
 
-        try (CSVReader reader = new CSVReader(new FileReader(predictionCsvPath))) {
+        // Resolve relative path from working directory
+        String csvPath = predictionCsvPath;
+        if (!csvPath.startsWith("/") && !csvPath.contains(":")) {
+            // Relative path - resolve from working directory
+            String workingDir = System.getProperty("user.dir");
+            csvPath = workingDir + "/" + csvPath;
+        }
+
+        System.out.println("Working Directory: " + System.getProperty("user.dir"));
+        System.out.println("Prediction CSV Path: " + csvPath);
+
+        try (CSVReader reader = new CSVReader(new FileReader(csvPath))) {
 
             // Skip Header
             reader.readNext();
-
-            System.out.println("Working Directory: " + System.getProperty("user.dir"));
-            System.out.println("Prediction CSV Path: " + predictionCsvPath);
 
             String[] row;
 
@@ -37,33 +45,33 @@ public class CLPredictionService {
 
                 PredictionRecord record = new PredictionRecord();
 
-                record.setAttendanceDate(row[16]);
-                record.setDepartment(row[5]);
-                record.setTeam(row[10]);
-                record.setShift(row[21]);
+                record.setAttendanceDate(row[10]);
+                record.setDepartment(row[3]);
+                record.setTeam(row[7]);
+                record.setShift(row[15]);
 
-                record.setDayOfWeek(Integer.parseInt(row[17]));
-                record.setMonth(Integer.parseInt(row[18]));
-                record.setQuarter(Integer.parseInt(row[19]));
-                record.setYear(Integer.parseInt(row[20]));
+                record.setDayOfWeek(Integer.parseInt(row[11]));
+                record.setMonth(Integer.parseInt(row[12]));
+                record.setQuarter(Integer.parseInt(row[13]));
+                record.setYear(Integer.parseInt(row[14]));
 
-                record.setProductivityScore(parseDouble(row[31], "ProductivityScore"));
-                record.setUtilizationRate(parseDouble(row[36], "UtilizationRate"));
-                record.setCapacityUtilization(parseDouble(row[37], "CapacityUtilization"));
-                record.setEfficiencyScore(parseDouble(row[38], "EfficiencyScore"));
+                record.setProductivityScore(parseDouble(row[23], "ProductivityScore"));
+                record.setUtilizationRate(parseDouble(row[28], "UtilizationRate"));
+                record.setCapacityUtilization(parseDouble(row[29], "CapacityUtilization"));
+                record.setEfficiencyScore(parseDouble(row[30], "EfficiencyScore"));
 
-                record.setCurrentCapacity(parseDouble(row[44], "CurrentCapacity"));
-                record.setRequiredCapacity(parseDouble(row[45], "RequiredCapacity"));
-                record.setAvailableHeadroom(parseDouble(row[46], "AvailableHeadroom"));
-                record.setCapacityLoad(parseDouble(row[47], "CapacityLoad"));
+                record.setCurrentCapacity(parseDouble(row[36], "CurrentCapacity"));
+                record.setRequiredCapacity(parseDouble(row[37], "RequiredCapacity"));
+                record.setAvailableHeadroom(parseDouble(row[38], "AvailableHeadroom"));
+                record.setCapacityLoad(parseDouble(row[39], "CapacityLoad"));
 
-                record.setPeakUtilization(parseDouble(row[48], "PeakUtilization"));
-                record.setScalingEvents(parseDouble(row[49], "ScalingEvents"));
+                record.setPeakUtilization(parseDouble(row[40], "PeakUtilization"));
+                record.setScalingEvents(parseDouble(row[41], "ScalingEvents"));
 
-                record.setHistoricalDemand(parseDouble(row[55], "HistoricalDemand"));
-                record.setWorkforceDemand(parseDouble(row[56], "WorkforceDemand"));
+                record.setHistoricalDemand(parseDouble(row[46], "HistoricalDemand"));
+                record.setWorkforceDemand(parseDouble(row[47], "WorkforceDemand"));
 
-                record.setWorkforceStatus(row[57]);
+                record.setWorkforceStatus(row[48]);
 
                 // Last column = PredictedDemand
                 record.setPredictedDemand(

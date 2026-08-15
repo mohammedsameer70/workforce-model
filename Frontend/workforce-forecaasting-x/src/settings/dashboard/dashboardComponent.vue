@@ -70,43 +70,6 @@
           style="width: 100%; height: 100%"
         />
       </div>
-
-      <div class="microserviceCard">
-        <div class="cardHeader">
-          <div>
-            <h3>Microservice Health</h3>
-            <p>7/8 Healthy</p>
-          </div>
-
-          <div class="healthBadge">
-            <i class="pi pi-check-circle"></i>
-            Healthy
-          </div>
-        </div>
-
-        <div v-for="service in microservices" :key="service.name" class="serviceRow">
-          <div class="serviceName">
-            <span class="statusDot" :class="service.status"></span>
-
-            <div>
-              <h4>{{ service.name }}</h4>
-              <small>{{ service.instances }} instances</small>
-            </div>
-          </div>
-
-          <div class="resourceInfo">
-            <div class="metric">
-              <span>CPU</span>
-              <strong>{{ service.cpu }}%</strong>
-            </div>
-
-            <div class="metric">
-              <span>Memory</span>
-              <strong>{{ service.memory }}%</strong>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </Panel>
   <Panel header="Department Staffing Heatmap" class="mb-4">
@@ -150,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Chart from 'primevue/chart'
 import Panel from 'primevue/panel'
 import { lbl } from '@/assets/constants/labels'
@@ -180,7 +143,9 @@ ChartJS.register(
   Tooltip,
   Legend,
 )
-const getDashoboardData = CLDashboardService.getDashboardData()
+
+let refreshInterval: number | null = null
+
 const staffingData = ref([
   {
     department: 'Inbound',
@@ -274,107 +239,148 @@ const alerts = ref([
 const metrics = ref([
   {
     title: 'Active Workforce',
-    value: '94.2%',
-    change: '1.8%',
-    rating: 'high',
+    value: 'Loading...',
+    change: '0%',
+    rating: 'medium',
     icon: 'pi pi-users',
   },
   {
     title: 'Forecast Accuracy',
-    value: '87.6%',
-    change: '0.4%',
+    value: 'Loading...',
+    change: '0%',
     rating: 'medium',
     icon: 'pi pi-chart-line',
   },
-  { title: 'Shift Utilization', value: '6', change: '12%', rating: 'low', icon: 'pi pi-clock' },
+  { title: 'Shift Utilization', value: 'Loading...', change: '0%', rating: 'medium', icon: 'pi pi-clock' },
   {
-    title: 'Open Alerts',
-    value: '34.2K',
-    change: '8.5%',
-    rating: 'critical',
+    title: 'Total Predictions',
+    value: 'Loading...',
+    change: '0%',
+    rating: 'medium',
     icon: 'pi pi-exclamation-triangle',
   },
   {
-    title: 'Orders Processed',
-    value: '89.1%',
-    change: '2.1%',
-    rating: 'high',
+    title: 'Average Demand',
+    value: 'Loading...',
+    change: '0%',
+    rating: 'medium',
     icon: 'pi pi-box',
   },
   {
-    title: 'Avg Productivity',
-    value: '78.4%',
+    title: 'Model Status',
+    value: 'Loading...',
+    change: '',
+    rating: 'medium',
+    icon: 'pi pi-cog',
+  },
+  {
+    title: 'R² Score',
+    value: 'Loading...',
     change: '0%',
     rating: 'medium',
-    icon: 'pi pi-arrow-up',
-  },
-  {
-    title: 'Capacity Load',
-    value: '99.97%',
-    change: '0.02%',
-    rating: 'high',
     icon: 'pi pi-chart-bar',
   },
-  { title: 'API Uptime', value: '100%', change: '', rating: 'perfect', icon: 'pi pi-wifi' },
+  { title: 'RMSE', value: 'Loading...', change: '', rating: 'medium', icon: 'pi pi-wifi' },
 ])
-const microservices = ref([
-  {
-    name: 'forecast-service',
-    instances: 3,
-    cpu: 34,
-    memory: 62,
-    status: 'healthy',
-  },
-  {
-    name: 'shift-optimizer',
-    instances: 2,
-    cpu: 28,
-    memory: 55,
-    status: 'healthy',
-  },
-  {
-    name: 'employee-service',
-    instances: 3,
-    cpu: 22,
-    memory: 48,
-    status: 'healthy',
-  },
-  {
-    name: 'analytics-engine',
-    instances: 2,
-    cpu: 67,
-    memory: 78,
-    status: 'warning',
-  },
-  {
-    name: 'auth-service',
-    instances: 2,
-    cpu: 12,
-    memory: 35,
-    status: 'healthy',
-  },
-  {
-    name: 'notification-service',
-    instances: 1,
-    cpu: 18,
-    memory: 42,
-    status: 'healthy',
-  },
-  {
-    name: 'ml-pipeline',
-    instances: 2,
-    cpu: 72,
-    memory: 81,
-    status: 'critical',
-  },
-  {
-    name: 'api-gateway',
-    instances: 3,
-    cpu: 15,
-    memory: 38,
-    status: 'healthy',
-  },
-])
+
+const fetchDashboardMetrics = async () => {
+  try {
+    const response = await CLDashboardService.getDashboardData()
+    console.log('Dashboard response:', response)
+    
+    if (response?.metrics) {
+      const backendMetrics = response.metrics as Record<string, string>
+      console.log('Backend metrics:', backendMetrics)
+      
+      metrics.value = [
+        {
+          title: 'Active Workforce',
+          value: backendMetrics['Average Demand'] || 'N/A',
+          change: '0%',
+          rating: 'medium',
+          icon: 'pi pi-users',
+        },
+        {
+          title: 'Forecast Accuracy',
+          value: backendMetrics['Accuracy'] || 'N/A',
+          change: '0%',
+          rating: 'medium',
+          icon: 'pi pi-chart-line',
+        },
+        { 
+          title: 'Shift Utilization', 
+          value: backendMetrics['Total Predictions'] || 'N/A', 
+          change: '0%', 
+          rating: 'medium', 
+          icon: 'pi pi-clock' 
+        },
+        {
+          title: 'Total Predictions',
+          value: backendMetrics['Total Predictions'] || 'N/A',
+          change: '0%',
+          rating: 'medium',
+          icon: 'pi pi-exclamation-triangle',
+        },
+        {
+          title: 'Average Demand',
+          value: backendMetrics['Average Demand'] || 'N/A',
+          change: '0%',
+          rating: 'medium',
+          icon: 'pi pi-box',
+        },
+        {
+          title: 'Model Status',
+          value: backendMetrics['Status'] || 'N/A',
+          change: '',
+          rating: 'medium',
+          icon: 'pi pi-cog',
+        },
+        {
+          title: 'R² Score',
+          value: backendMetrics['R² Score'] || 'N/A',
+          change: '0%',
+          rating: 'medium',
+          icon: 'pi pi-chart-bar',
+        },
+        { 
+          title: 'RMSE', 
+          value: backendMetrics['RMSE'] || 'N/A', 
+          change: '', 
+          rating: 'medium', 
+          icon: 'pi pi-wifi' 
+        },
+      ]
+    } else {
+      console.log('No metrics in response')
+    }
+
+    // Update chart data from backend
+    if (response?.charts) {
+      const charts = response.charts as Record<string, any>
+      
+      // Update line chart
+      if (charts.lineChart?.labels && charts.lineChart?.historical && charts.lineChart?.predicted) {
+        chartData.value = setChartData(
+          charts.lineChart.labels,
+          charts.lineChart.historical,
+          charts.lineChart.predicted
+        )
+      }
+      
+      // Update bar chart
+      if (charts.barChart?.labels && charts.barChart?.performance && charts.barChart?.target) {
+        barChartData.value = setBarChartData(
+          charts.barChart.labels,
+          charts.barChart.performance,
+          charts.barChart.target
+        )
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch dashboard metrics:', error)
+    // Keep default values on error
+  }
+}
 
 /* ---------------- CHART ---------------- */
 const chartData = ref()
@@ -383,33 +389,43 @@ const barChartData = ref()
 const barChartOptions = ref()
 
 onMounted(() => {
-
+  fetchDashboardMetrics()
   
-  chartData.value = setChartData()
   chartOptions.value = setChartOptions()
-  barChartData.value = setBarChartData()
   barChartOptions.value = setBarChartOptions()
+
+  // Set up real-time refresh every 30 seconds
+  refreshInterval = window.setInterval(() => {
+    fetchDashboardMetrics()
+  }, 30000)
 })
 
-const setChartData = () => {
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
+})
+
+const setChartData = (labels: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July'], historical: number[] = [65, 59, 80, 81, 56, 55, 10], predicted: number[] = [28, 48, 40, 19, 86, 27, 90]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
   return {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+    labels: labels,
     datasets: [
       {
-        label: 'Dataset 1',
+        label: 'Historical Demand',
         fill: false,
         borderColor: documentStyle.getPropertyValue('--p-cyan-500'),
         tension: 0.4,
-        data: [65, 59, 80, 81, 56, 55, 10],
+        data: historical,
       },
       {
-        label: 'Dataset 2',
+        label: 'Predicted Demand',
         fill: false,
         borderColor: documentStyle.getPropertyValue('--p-gray-500'),
         tension: 0.4,
-        data: [28, 48, 40, 19, 86, 27, 90],
+        data: predicted,
       },
     ],
   }
@@ -441,23 +457,23 @@ const setChartOptions = () => {
   }
 }
 
-const setBarChartData = () => {
+const setBarChartData = (labels: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July'], performance: number[] = [65, 59, 80, 81, 56, 55, 40], target: number[] = [28, 48, 40, 19, 86, 27, 90]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
   return {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+    labels: labels,
     datasets: [
       {
         label: 'Department Performance',
         backgroundColor: documentStyle.getPropertyValue('--p-cyan-500'),
         borderColor: documentStyle.getPropertyValue('--p-cyan-500'),
-        data: [65, 59, 80, 81, 56, 55, 40],
+        data: performance,
       },
       {
         label: 'Target Performance',
         backgroundColor: documentStyle.getPropertyValue('--p-gray-500'),
         borderColor: documentStyle.getPropertyValue('--p-gray-500'),
-        data: [28, 48, 40, 19, 86, 27, 90],
+        data: target,
       },
     ],
   }

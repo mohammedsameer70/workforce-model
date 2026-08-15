@@ -26,7 +26,7 @@ export interface DashboardStatsDTO {
   modelAccuracy: number;
 }
 
-const API_BASE_URL = 'http://localhost:5233/api/dashboard';
+const API_BASE_URL = '/api/dashboard';
 
 class DashboardService {
   async getDashboardData(): Promise<{

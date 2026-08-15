@@ -901,7 +901,7 @@
 </template>
 <script setup lang="ts">
 
-import { ref, nextTick, computed, onMounted } from "vue";
+import { ref, nextTick, computed, onMounted, watch } from "vue";
 import { Chart, registerables } from "chart.js";
 import FileUpload from "primevue/fileupload";
 import type { FileUploadSelectEvent } from "primevue/fileupload";
@@ -1063,13 +1063,16 @@ const setDashboardTrainingMetrics = (result: TrainingResponseDTO) => {
 const fetchDashboardMetrics = async () => {
   try {
     const response = await CLDashboardService.getDashboardData();
+    console.log('AI Model dashboard response:', response);
     const dashboardResponse = response as unknown as { metrics?: unknown }
 
     if (dashboardResponse?.metrics) {
       dashboardMetrics.value = mapDashboardMetrics(dashboardResponse.metrics)
+    } else {
+      console.log('No metrics in AI Model dashboard response')
     }
   } catch (error) {
-    console.log('Dashboard metrics endpoint not available - using local metrics')
+    console.error('Dashboard metrics endpoint not available - using local metrics:', error)
     // Dashboard endpoint not implemented yet, skip gracefully
   }
 };
@@ -1311,6 +1314,14 @@ const predictionMetadata = ref({
 ========================================================== */
 
 const predictionResults = ref<any[]>([]);
+
+// Watch for prediction results to change and redraw chart
+watch(() => predictionResults.value, async (newResults) => {
+  if (newResults.length > 0) {
+    await nextTick();
+    await drawPredictionChart();
+  }
+});
 
 const predictionTableRows = computed(() => {
     if (predictionRawRows.value.length && predictionResults.value.length) {

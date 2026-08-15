@@ -5,7 +5,7 @@ class AIModelService {
 
     async train(formData: FormData, signal?: AbortSignal): Promise<TrainingResponseDTO> {
         const response = await axios.post(
-            "http://localhost:5233/api/train",
+            "/api/train",
             formData,
             {
                 headers: {
@@ -19,7 +19,7 @@ class AIModelService {
 
     async downloadCleanedDataset(): Promise<Blob> {
     const response = await axios.get(
-        "http://localhost:5233/api/train/cleaned-dataset",
+        "/api/train/cleaned-dataset",
         {
             responseType: "blob"
         }
@@ -29,7 +29,7 @@ class AIModelService {
 
     async predict(formData: FormData) {
     const response = await axios.post(
-        "http://localhost:5233/api/predict",
+        "/api/predict",
         formData,
         {
             headers: {
@@ -42,21 +42,21 @@ class AIModelService {
 
     async getLatestPrediction() {
         const response = await axios.get(
-            "http://localhost:5233/api/predict/latest"
+            "/api/predict/latest"
         );
         return response.data;
     }
 
     async getLatestModel() {
         const response = await axios.get(
-            "http://localhost:5233/api/train/latest-model"
+            "/api/train/latest-model"
         );
         return response.data;
     }
 
     async getModelComparisons() {
         const response = await axios.get(
-            "http://localhost:5233/api/train/model-comparisons"
+            "/api/train/model-comparisons"
         );
         return response.data;
     }

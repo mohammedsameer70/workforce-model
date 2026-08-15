@@ -196,107 +196,6 @@
   padding: 20px;
   margin: 20px 0;
 }
-.microserviceCard {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.cardHeader h3 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.cardHeader p {
-  margin: 4px 0 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.healthBadge {
-  background: #dcfce7;
-  color: #15803d;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.serviceRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.serviceRow:last-child {
-  border-bottom: none;
-}
-
-.serviceName {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.serviceName h4 {
-  margin: 0;
-  font-size: 14px;
-}
-
-.serviceName small {
-  color: #64748b;
-}
-
-.statusDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.statusDot.healthy {
-  background: #22c55e;
-}
-
-.statusDot.warning {
-  background: #f59e0b;
-}
-
-.statusDot.critical {
-  background: #ef4444;
-}
-
-.resourceInfo {
-  display: flex;
-  gap: 30px;
-}
-
-.metric {
-  text-align: center;
-}
-
-.metric span {
-  display: block;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.metric strong {
-  font-size: 14px;
-  color: #0f172a;
-}
 /* ---------- DASHBOARD ---------- */
 
 .dashboard {
@@ -447,7 +346,7 @@
   color: #16a34a;
 }
 
-/* ---------- DEPARTMENT + MICROSERVICE ---------- */
+/* ---------- DEPARTMENT ---------- */
 
 .departmentSection {
   display: flex;
@@ -457,115 +356,8 @@
 }
 
 .departmentSection .chartCard {
-  flex: 2;
-  height: 480px;
-}
-
-.departmentSection .microserviceCard {
   flex: 1;
-}
-
-/* ---------- MICROSERVICE ---------- */
-
-.microserviceCard {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 20px;
   height: 480px;
-  overflow-y: auto;
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.cardHeader h3 {
-  margin: 0;
-}
-
-.cardHeader p {
-  margin: 4px 0 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.healthBadge {
-  background: #dcfce7;
-  color: #15803d;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.serviceRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.serviceRow:last-child {
-  border-bottom: none;
-}
-
-.serviceName {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.serviceName h4 {
-  margin: 0;
-  font-size: 14px;
-}
-
-.serviceName small {
-  color: #64748b;
-}
-
-.statusDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.statusDot.healthy {
-  background: #22c55e;
-}
-
-.statusDot.warning {
-  background: #f59e0b;
-}
-
-.statusDot.critical {
-  background: #ef4444;
-}
-
-.resourceInfo {
-  display: flex;
-  gap: 24px;
-}
-
-.metric {
-  text-align: center;
-}
-
-.metric span {
-  display: block;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.metric strong {
-  font-size: 14px;
 }
 
 /* ---------- PRIMEVUE PANEL ---------- */

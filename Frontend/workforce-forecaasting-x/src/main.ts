@@ -16,6 +16,7 @@ import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
+import FileUpload from 'primevue/fileupload'
 
 /* Employee Page Components */
 import DataTable from 'primevue/datatable'
@@ -87,6 +88,7 @@ app.component('Button', Button)
 app.component('Tag', Tag)
 app.component('Divider', Divider)
 app.component('Toast', Toast)
+app.component('FileUpload', FileUpload)
 
 /* Employee Components */
 app.component('DataTable', DataTable)
