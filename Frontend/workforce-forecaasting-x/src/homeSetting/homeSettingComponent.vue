@@ -30,67 +30,74 @@ export default defineComponent({
         color: NConstants.colors[1],
       },
       {
+        key: NConstants.SETTINGS.AI_MODELS,
+        value: lbl.AI_MODELS,
+        icon: 'pi-microchip',
+        description: lbl.aiModelsDesc,
+        color: NConstants.colors[2],
+      },
+      {
         key: NConstants.SETTINGS.SHIFTOPTIMIZATION,
         value: lbl.SHIFTOPTIMIZATION,
         icon: 'pi-calendar',
         description: lbl.shiftOptimizationDesc,
-        color: NConstants.colors[2],
+        color: NConstants.colors[3],
       },
       {
         key: NConstants.SETTINGS.EMPLOYEES,
         value: lbl.EMPLOYEES,
         icon: 'pi-users',
         description: lbl.employeesDesc,
-        color: NConstants.colors[3],
+        color: NConstants.colors[4],
       },
       {
         key: NConstants.SETTINGS.ANALYTICS,
         value: lbl.ANALYTICS,
         icon: 'pi-chart-bar',
         description: lbl.analyticsDesc,
-        color: NConstants.colors[4],
+        color: NConstants.colors[5],
       },
       {
         key: NConstants.SETTINGS.CAPACITYPLANNIG,
         value: lbl.CAPACITYPLANNING,
         icon: 'pi-chart-line',
         description: lbl.capacityPlanningDesc,
-        color: NConstants.colors[5],
+        color: NConstants.colors[6],
       },
       {
         key: NConstants.SETTINGS.MONITORING,
         value: lbl.MONITORING,
         icon: 'pi-eye',
         description: lbl.monitoringDesc,
-        color: NConstants.colors[6],
+        color: NConstants.colors[7],
       },
       {
         key: NConstants.SETTINGS.BENCHMARKS,
         value: lbl.BENCHMARKS,
         icon: 'pi-trophy',
         description: lbl.benchmarksDesc,
-        color: NConstants.colors[7],
+        color: NConstants.colors[8],
       },
       {
         key: NConstants.SETTINGS.REPORTS,
         value: lbl.REPORTS,
         icon: 'pi-file-pdf',
         description: lbl.reportsDesc,
-        color: NConstants.colors[8],
+        color: NConstants.colors[9],
       },
       {
         key: NConstants.SETTINGS.NOTIFICATIONS,
         value: lbl.NOTIFICATIONS,
         icon: 'pi-bell',
         description: lbl.notificationsDesc,
-        color: NConstants.colors[9],
+        color: NConstants.colors[10],
       },
       {
         key: NConstants.SETTINGS.SETTINGS,
         value: lbl.SETTINGS,
         icon: 'pi-cog',
         description: lbl.settingsDesc,
-        color: NConstants.colors[10],
+        color: NConstants.colors[11],
       },
     ])
 
@@ -119,6 +126,9 @@ export default defineComponent({
           break
         case NConstants.SETTINGS.FORECASTING:
           router.push('/forecasting')
+          break
+        case NConstants.SETTINGS.AI_MODELS:
+          router.push('/ai-models')
           break
         case NConstants.SETTINGS.SHIFTOPTIMIZATION:
           router.push('/shiftoptimization')

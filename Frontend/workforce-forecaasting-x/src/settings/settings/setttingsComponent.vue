@@ -50,6 +50,88 @@
       </div>
     </div>
 
+    <!-- AI Model Configuration -->
+    <div class="settingsCard">
+      <div class="cardHeader">
+        <div class="iconBox">
+          <i class="pi pi-brain"></i>
+        </div>
+
+        <div>
+          <h3>AI Model Configuration</h3>
+          <p>Machine learning model settings and parameters</p>
+        </div>
+      </div>
+
+      <div class="cardBody">
+        <div class="formGrid">
+          <div class="field">
+            <label>Active Model</label>
+            <Dropdown
+              v-model="aiModel.activeModel"
+              :options="aiModelOptions"
+              fluid
+              :disabled="isAiModelDisabled"
+            />
+          </div>
+
+          <div class="field">
+            <label>Model Version</label>
+            <InputText v-model="aiModel.version" fluid disabled />
+          </div>
+
+          <div class="field">
+            <label>Training Frequency</label>
+            <Dropdown
+              v-model="aiModel.trainingFrequency"
+              :options="trainingOptions"
+              fluid
+              :disabled="isAiModelDisabled"
+            />
+          </div>
+
+          <div class="field">
+            <label>Confidence Threshold</label>
+            <InputNumber
+              v-model="aiModel.confidenceThreshold"
+              :min="0"
+              :max="100"
+              suffix="%"
+              fluid
+              :disabled="isAiModelDisabled"
+            />
+          </div>
+        </div>
+
+        <div class="settingRow">
+          <div>
+            <h4>Auto-Retrain</h4>
+            <span>Automatically retrain model with new data</span>
+          </div>
+
+          <InputSwitch v-model="aiModel.autoRetrain" :disabled="isAiModelDisabled" />
+        </div>
+
+        <div class="settingRow">
+          <div>
+            <h4>Model Monitoring</h4>
+            <span>Track model performance metrics</span>
+          </div>
+
+          <InputSwitch v-model="aiModel.monitoring" :disabled="isAiModelDisabled" />
+        </div>
+
+        <div class="settingRow">
+          <div>
+            <h4>Feature Importance</h4>
+            <span>Display feature importance in predictions</span>
+          </div>
+
+          <InputSwitch v-model="aiModel.featureImportance" :disabled="isAiModelDisabled" />
+        </div>
+      </div>
+    </div>
+
     <!-- Appearance -->
     <div class="settingsCard">
       <div class="cardHeader">
@@ -154,11 +236,6 @@
       <div class="cardBody">
         <div class="formGrid">
           <div class="field">
-            <label>Forecast Model</label>
-            <Dropdown v-model="config.model" :options="models" fluid />
-          </div>
-
-          <div class="field">
             <label>Refresh Interval</label>
             <Dropdown v-model="config.refresh" :options="refreshOptions" fluid />
           </div>
@@ -171,6 +248,11 @@
           <div class="field">
             <label>ML Service URL</label>
             <InputText v-model="config.ml" fluid />
+          </div>
+
+          <div class="field">
+            <label>Data Retention (days)</label>
+            <InputNumber v-model="config.dataRetention" :min="7" :max="365" fluid />
           </div>
         </div>
       </div>
@@ -185,20 +267,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import InputSwitch from 'primevue/inputswitch'
+import InputNumber from 'primevue/inputnumber'
 import SettingsService from './settingsService'
 import type { SettingsDTO } from './settingsService'
+import { aiModelReady, isTraining, isPredicting } from '@/state/aiModelGate'
 
 const roles = ['Super Admin', 'Operations Admin', 'Manager']
 const departments = ['All Departments', 'Inbound', 'Outbound', 'Packing', 'Sortation']
 const models = ['LSTM v3.2 (Active)', 'XGBoost v2.1', 'Prophet v1.0']
 const refreshOptions = ['30 seconds', '1 minute', '5 minutes']
+const aiModelOptions = [
+  'LSTM v3.2',
+  'XGBoost v2.1',
+  'Prophet v1.0',
+  'Random Forest v1.5',
+  'Transformer v2.0',
+]
+const trainingOptions = ['Daily', 'Weekly', 'Monthly', 'Manual']
 
 const profile = ref({
   fullName: '',
@@ -225,11 +317,23 @@ const config = ref({
   refresh: '',
   api: '',
   ml: '',
+  dataRetention: 90,
+})
+
+const aiModel = ref({
+  activeModel: 'LSTM v3.2',
+  version: '3.2.1',
+  trainingFrequency: 'Weekly',
+  confidenceThreshold: 75,
+  autoRetrain: false,
+  monitoring: true,
+  featureImportance: true,
 })
 
 const loading = ref(false)
 const message = ref('')
 
+const isAiModelDisabled = computed(() => false)
 const loadSettings = async () => {
   loading.value = true
   message.value = ''
@@ -249,6 +353,7 @@ const loadSettings = async () => {
       refresh: data.config.refresh,
       api: data.config.apiUrl,
       ml: data.config.mlUrl,
+      dataRetention: data.config.dataRetention || 90,
     }
   } catch (err) {
     console.error('Failed to load settings', err)
@@ -277,6 +382,7 @@ const saveChanges = async () => {
         refresh: config.value.refresh,
         apiUrl: config.value.api,
         mlUrl: config.value.ml,
+        dataRetention: config.value.dataRetention,
       },
     }
     await SettingsService.saveSettings(payload)

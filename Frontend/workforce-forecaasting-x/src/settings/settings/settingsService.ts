@@ -25,6 +25,7 @@ export interface SettingsConfigDTO {
   refresh: string
   apiUrl: string
   mlUrl: string
+  dataRetention?: number
 }
 
 export interface SettingsDTO {

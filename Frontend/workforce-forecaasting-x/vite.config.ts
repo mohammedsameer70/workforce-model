@@ -19,6 +19,18 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5233',
         changeOrigin: true,
+        configure: (proxy, options) => {
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            // Ensure binary responses are not modified
+            if (req.url?.includes('/download')) {
+              proxyRes.headers['content-type'] = 'application/pdf';
+              delete proxyRes.headers['content-encoding'];
+              delete proxyRes.headers['content-length'];
+              // Disable buffering for binary data
+              proxyRes.headers['x-accel-buffering'] = 'no';
+            }
+          });
+        },
       },
     },
   },

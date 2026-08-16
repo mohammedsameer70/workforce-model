@@ -25,6 +25,11 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import ProgressBar from 'primevue/progressbar'
 
+/* Settings Components */
+import Dropdown from 'primevue/dropdown'
+import InputNumber from 'primevue/inputnumber'
+import InputSwitch from 'primevue/inputswitch'
+
 /* ChartJS */
 import {
   Chart as ChartJS,
@@ -96,6 +101,11 @@ app.component('Column', Column)
 app.component('InputText', InputText)
 app.component('Select', Select)
 app.component('ProgressBar', ProgressBar)
+
+/* Settings Components */
+app.component('Dropdown', Dropdown)
+app.component('InputNumber', InputNumber)
+app.component('InputSwitch', InputSwitch)
 
 /* Global Labels */
 app.config.globalProperties.$lbl = lbl

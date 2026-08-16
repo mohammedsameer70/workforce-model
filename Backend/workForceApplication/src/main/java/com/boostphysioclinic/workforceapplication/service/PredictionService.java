@@ -489,12 +489,17 @@ public class PredictionService {
             // ========================================================
 
             if (!results.isEmpty()) {
-
-                predictionResultRepository.saveAll(
-                        results
-                );
-
-                predictionResultRepository.flush();
+                long startTime = System.currentTimeMillis();
+                System.out.println("Starting batch save of " + results.size() + " prediction results...");
+                
+                predictionResultRepository.saveAll(results);
+                
+                long saveTime = System.currentTimeMillis() - startTime;
+                System.out.println("Batch save completed in " + saveTime + "ms");
+                
+                // Remove flush() to let JPA optimize batch operations
+                // Only flush if you need immediate database consistency
+                // predictionResultRepository.flush();
             }
 
 

@@ -24,6 +24,7 @@ const NConstants = {
     '#F1F8E9', // Light Lime
     '#ECEFF1', // Light Grey
     '#FBE9E7', // Light Coral
+    '#E8EAF6', // Light Indigo
   ],
 }
 export default NConstants

@@ -44,17 +44,36 @@ public class ReportController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable Long id) {
+        System.err.println("Download request for report ID: " + id);
         ReportDTO report = reportsService.getReports().stream()
                 .filter(r -> r.getId().equals(id.intValue()))
                 .findFirst()
                 .orElse(null);
         
-        if (report != null && report.getFileData() != null) {
+        System.err.println("Report found: " + (report != null));
+        if (report != null) {
+            System.err.println("Report name: " + report.getName());
+            System.err.println("File data null: " + (report.getFileData() == null));
+            if (report.getFileData() != null) {
+                System.err.println("File data length: " + report.getFileData().length);
+            }
+        }
+        
+        if (report != null && report.getFileData() != null && report.getFileData().length > 0) {
+            String filename = report.getName() != null ? report.getName().replaceAll("[^a-zA-Z0-9\\s_-]", "") : "report";
+            System.err.println("Returning PDF with size: " + report.getFileData().length + " bytes");
+            
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + report.getName() + ".txt\"")
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + ".pdf\"")
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(report.getFileData().length))
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(HttpHeaders.PRAGMA, "no-cache")
+                    .header(HttpHeaders.EXPIRES, "0")
+                    .contentType(MediaType.APPLICATION_PDF)
                     .body(report.getFileData());
         }
+        System.err.println("Failed to return PDF - report null or file data empty");
         return ResponseEntity.notFound().build();
     }
 

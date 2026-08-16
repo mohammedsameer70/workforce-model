@@ -14,6 +14,11 @@
   overflow: hidden;
 }
 
+.settingsCard.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .cardHeader {
   display: flex;
   align-items: center;

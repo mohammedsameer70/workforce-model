@@ -101,9 +101,17 @@ class ReportsService {
   }
 
   async downloadReport(id: string): Promise<Blob> {
+    console.log('Starting download for report ID:', id)
     const response = await api.get(`/reports/${id}/download`, {
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: {
+        'Accept': 'application/pdf'
+      }
     })
+    console.log('Download response status:', response.status)
+    console.log('Download response headers:', response.headers)
+    console.log('Download blob size:', response.data.size)
+    console.log('Download blob type:', response.data.type)
     return response.data
   }
 }
