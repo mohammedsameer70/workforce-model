@@ -1,13 +1,32 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useTheme } from './useTheme'
-import InputText from 'primevue/inputtext'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Badge from 'primevue/badge'
-import ToggleSwitch from 'primevue/toggleswitch'
+import Button from 'primevue/button'
+import AuthService from '@/auth/authService'
 
-const searchText = ref('')
+const router = useRouter()
 
-const { isDark } = useTheme()
+const currentUser = computed(() => AuthService.getCurrentUser())
+const username = computed(() => currentUser.value.username || 'Guest')
+const userRole = computed(() => currentUser.value.role || 'Unknown')
+
+const handleLogout = () => {
+  AuthService.logout()
+  router.push('/login')
+}
+
+const goToHomeSettings = () => {
+  router.push('/homeSettings')
+}
+
+onMounted(() => {
+  // Refresh user data on mount
+  const token = AuthService.getToken()
+  if (!token) {
+    router.push('/login')
+  }
+})
 </script>
 
 <template>
@@ -19,26 +38,20 @@ const { isDark } = useTheme()
       </div>
     </div>
 
-    <div class="navbar-center">
-      <div class="search-box">
-        <span class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <InputText v-model="searchText" placeholder="Search operations..." class="searchInput" />
-        </span>
-      </div>
-    </div>
-
     <div class="navbar-right">
+      <Button icon="pi pi-cog" severity="secondary" text rounded @click="goToHomeSettings" class="home-settings-button" />
       
-  <ToggleSwitch v-model="isDark" />
-
       <Badge value="Live" severity="success" class="status-badge"></Badge>
 
       <div class="user-profile">
         <div class="roleIcon">
           <i class="pi pi-user" style="font-size: 0.87rem"></i>
         </div>
-        <span>Operations Admin</span>
+        <div class="user-info">
+          <span class="username">{{ username }}</span>
+          <span class="role">{{ userRole }}</span>
+        </div>
+        <Button icon="pi pi-sign-out" severity="danger" text rounded @click="handleLogout" class="logout-button" />
       </div>
     </div>
   </div>

@@ -1,6 +1,12 @@
 -- Workforce Management Database Schema
 -- This script creates all tables for the workforce management application
-
+CREATE TABLE IF NOT EXISTS users (
+                                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                     username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    enabled BOOLEAN NOT NULL
+    );
 -- Dashboard Entities
 CREATE TABLE IF NOT EXISTS kpi_card (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

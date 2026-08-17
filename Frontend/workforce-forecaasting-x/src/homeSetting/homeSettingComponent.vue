@@ -6,6 +6,7 @@ import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import { useRouter } from 'vue-router'
 import { aiModelReady } from '@/state/aiModelGate'
+import AuthService from '@/auth/authService'
 
 export default defineComponent({
   components: { Card, InputText },
@@ -13,6 +14,46 @@ export default defineComponent({
   setup() {
     const router = useRouter()
     const searchText = ref('')
+
+    const currentUser = computed(() => AuthService.getCurrentUser())
+    const userRole = computed(() => currentUser.value.role || 'VIEWER')
+
+    // Define role-based access for each card
+    const roleAccess = {
+      ADMIN: [
+        NConstants.SETTINGS.DASHBOARD,
+        NConstants.SETTINGS.FORECASTING,
+        NConstants.SETTINGS.AI_MODELS,
+        NConstants.SETTINGS.SHIFTOPTIMIZATION,
+        NConstants.SETTINGS.EMPLOYEES,
+        NConstants.SETTINGS.ANALYTICS,
+        NConstants.SETTINGS.CAPACITYPLANNIG,
+        NConstants.SETTINGS.MONITORING,
+        NConstants.SETTINGS.BENCHMARKS,
+        NConstants.SETTINGS.REPORTS,
+        NConstants.SETTINGS.NOTIFICATIONS,
+        NConstants.SETTINGS.SETTINGS,
+      ],
+      MANAGER: [
+        NConstants.SETTINGS.DASHBOARD,
+        NConstants.SETTINGS.FORECASTING,
+        NConstants.SETTINGS.AI_MODELS,
+        NConstants.SETTINGS.SHIFTOPTIMIZATION,
+        NConstants.SETTINGS.EMPLOYEES,
+        NConstants.SETTINGS.ANALYTICS,
+        NConstants.SETTINGS.CAPACITYPLANNIG,
+        NConstants.SETTINGS.MONITORING,
+        NConstants.SETTINGS.BENCHMARKS,
+        NConstants.SETTINGS.REPORTS,
+        NConstants.SETTINGS.NOTIFICATIONS,
+      ],
+      VIEWER: [
+        NConstants.SETTINGS.DASHBOARD,
+        NConstants.SETTINGS.ANALYTICS,
+        NConstants.SETTINGS.MONITORING,
+        NConstants.SETTINGS.REPORTS,
+      ],
+    }
 
     const r_ArrHomeSettInfo = ref([
       {
@@ -101,12 +142,16 @@ export default defineComponent({
       },
     ])
 
-    const settingsCards = computed(() =>
-      r_ArrHomeSettInfo.value.map((item) => ({
-        ...item,
-        disabled: !aiModelReady.value && item.key !== NConstants.SETTINGS.AI_MODELS,
-      })),
-    )
+    const settingsCards = computed(() => {
+      const allowedKeys = roleAccess[userRole.value as keyof typeof roleAccess] || roleAccess.VIEWER
+      
+      return r_ArrHomeSettInfo.value
+        .filter((item) => allowedKeys.includes(item.key))
+        .map((item) => ({
+          ...item,
+          disabled: false,
+        }))
+    })
 
     const filteredSettings = computed(() => {
       return settingsCards.value.filter((item) =>
@@ -115,11 +160,6 @@ export default defineComponent({
     })
 
     function openSettings(setting: any) {
-      if (setting.disabled) {
-        alert('Please train or predict a model first to unlock the other modules.')
-        return
-      }
-
       switch (setting.key) {
         case NConstants.SETTINGS.DASHBOARD:
           router.push('/dashboard')
@@ -166,6 +206,7 @@ export default defineComponent({
       filteredSettings,
       aiModelReady,
       NConstants,
+      userRole,
     }
   },
 })
@@ -190,7 +231,6 @@ export default defineComponent({
         v-for="cardsItem in filteredSettings"
         :key="cardsItem.key"
         class="cardItems"
-        :class="{ disabled: !aiModelReady && cardsItem.key !== NConstants.SETTINGS.AI_MODELS }"
       >
         <template #header>
           <div class="cardHeader">

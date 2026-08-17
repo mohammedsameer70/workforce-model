@@ -17,17 +17,12 @@
   flex-shrink: 0;
 }
 
-.navbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .logo {
@@ -44,44 +39,6 @@
   font-size: 0.87rem;
   color: #00d4ff;
 }
-
-.search-box {
-  display: flex;
-  align-items: center;
-  max-width: 350px;
-  width: 100%;
-}
-
-.p-input-icon-left {
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.searchInput {
-  width: 100% !important;
-  padding: 0.6rem 1rem 0.6rem 2.5rem !important;
-  background-color: #1e2535;
-  border: 1px solid #2d3748;
-  color: #ffffff;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.searchInput:focus {
-  background-color: #2a3448;
-  border-color: #00d4ff;
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-}
-
-.searchInput::placeholder {
-  color: #6b7280;
-}
-
-/* theme toggle removed — app uses single light theme */
 
 .status-badge {
   display: flex;
@@ -135,19 +92,43 @@
   color: #d1d5db;
 }
 
-@media (max-width: 1024px) {
-  .topMenuBar {
-    padding: 0 1rem;
-  }
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
 
-  .navbar-center {
-    order: 3;
-    flex-basis: 100%;
-  }
+.username {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
 
-  .search-box {
-    max-width: 250px;
-  }
+.role {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.home-settings-button {
+  width: 32px;
+  height: 32px;
+}
+
+.home-settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-button {
+  margin-left: 0.5rem;
+  width: 32px;
+  height: 32px;
+}
+
+.logout-button:hover {
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -160,11 +141,7 @@
     display: none;
   }
 
-  .search-box {
-    display: none;
-  }
-
-  .user-profile span {
+  .user-info {
     display: none;
   }
 

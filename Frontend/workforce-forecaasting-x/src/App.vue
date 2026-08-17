@@ -7,8 +7,12 @@ import Toast from 'primevue/toast'
 
 const route = useRoute()
 // Default light theme only; removed dark-mode toggle
+const showTopBar = computed(() => {
+  return route.name !== 'login'
+})
+
 const showSidebar = computed(() => {
-  return route.name !== 'homeSettings'
+  return route.name !== 'login' && route.name !== 'homeSettings'
 })
 
 // note: dark mode support removed — app defaults to light styles
@@ -17,7 +21,7 @@ const showSidebar = computed(() => {
 <template>
   <div class="app-wrapper">
     <Toast />
-    <topMenuBarComponent v-if="showSidebar" class="top-bar" />
+    <topMenuBarComponent v-if="showTopBar" class="top-bar" />
 
     <div class="layout">
       <div class="sideBar" v-if="showSidebar">

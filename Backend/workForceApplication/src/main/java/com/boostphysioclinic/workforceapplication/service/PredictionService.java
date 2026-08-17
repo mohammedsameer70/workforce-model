@@ -6,6 +6,7 @@ import com.boostphysioclinic.workforceapplication.dto.PredictionResponse;
 import com.boostphysioclinic.workforceapplication.dto.PredictionResultDTO;
 import com.boostphysioclinic.workforceapplication.dto.entity.PredictionResult;
 import com.boostphysioclinic.workforceapplication.dto.entity.PredictionRun;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -17,8 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
-import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.time.LocalDate;
