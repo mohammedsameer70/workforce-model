@@ -3,14 +3,12 @@
     <h1>{{ lbl.operationsCommandCenter }}</h1>
     <p>{{ lbl.operationsCommandCenterDesc }}</p>
   </div>
-
   <div v-if="loading" class="page-loading-overlay">
     <div class="page-loading-panel">
       <div class="page-loading-spinner"></div>
       <div>Loading dashboard data...</div>
     </div>
   </div>
-
   <!-- KPI CARDS -->
   <div class="cardsInfo">
     <div class="card" v-for="metric in metrics" :key="metric.title">
@@ -22,7 +20,6 @@
       <p>{{ metric.value }}</p>
     </div>
   </div>
-
   <!-- CHART -->
   <Panel :header="lbl.workforce" class="mb-4">
     <div class="workforceSection">
@@ -118,7 +115,6 @@
   </Panel>
   <!-- BAR CHART -->
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import Chart from 'primevue/chart'
@@ -126,33 +122,10 @@ import Panel from 'primevue/panel'
 import { lbl } from '@/assets/constants/labels'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-
-import {
-  Chart as ChartJS,
-  LineElement,
-  BarElement,
-  BarController,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-} from 'chart.js'
+import { Chart as ChartJS,LineElement,BarElement, BarController,CategoryScale,LinearScale,PointElement,Tooltip,Legend} from 'chart.js'
 import CLDashboardService from '../aiModels/dashboardService'
-
-ChartJS.register(
-  LineElement,
-  BarElement,
-  BarController,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-)
-
+ChartJS.register( LineElement,BarElement,BarController,CategoryScale,LinearScale,PointElement,Tooltip,Legend,)
 let refreshInterval: number | null = null
-
 const staffingData = ref([
   {
     department: 'Inbound',
@@ -197,7 +170,6 @@ const staffingData = ref([
     total: 113,
   },
 ])
-
 const alerts = ref([
   {
     severity: 'critical',
@@ -296,9 +268,7 @@ const metrics = ref([
   },
   { title: 'RMSE', value: 'Loading...', change: '', rating: 'medium', icon: 'pi pi-chart-bar' },
 ])
-
 const loading = ref(true)
-
 const fetchDashboardMetrics = async () => {
   loading.value = true
   try {
@@ -407,32 +377,26 @@ const fetchDashboardMetrics = async () => {
     loading.value = false
   }
 }
-
 /* ---------------- CHART ---------------- */
 const chartData = ref()
 const chartOptions = ref()
 const barChartData = ref()
 const barChartOptions = ref()
-
 onMounted(() => {
   fetchDashboardMetrics()
-  
   chartOptions.value = setChartOptions()
   barChartOptions.value = setBarChartOptions()
-
   // Set up real-time refresh every 30 seconds
   refreshInterval = window.setInterval(() => {
     fetchDashboardMetrics()
   }, 30000)
 })
-
 onUnmounted(() => {
   if (refreshInterval) {
     clearInterval(refreshInterval)
     refreshInterval = null
   }
 })
-
 const setChartData = (labels: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July'], historical: number[] = [65, 59, 80, 81, 56, 55, 10], predicted: number[] = [28, 48, 40, 19, 86, 27, 90]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
@@ -456,7 +420,6 @@ const setChartData = (labels: string[] = ['January', 'February', 'March', 'April
     ],
   }
 }
-
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
   const textColor = documentStyle.getPropertyValue('--p-text-color')
@@ -482,7 +445,6 @@ const setChartOptions = () => {
     },
   }
 }
-
 const setBarChartData = (labels: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July'], performance: number[] = [65, 59, 80, 81, 56, 55, 40], target: number[] = [28, 48, 40, 19, 86, 27, 90]) => {
   const documentStyle = getComputedStyle(document.documentElement)
 
@@ -504,7 +466,6 @@ const setBarChartData = (labels: string[] = ['January', 'February', 'March', 'Ap
     ],
   }
 }
-
 const setBarChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement)
   const textColor = documentStyle.getPropertyValue('--p-text-color')

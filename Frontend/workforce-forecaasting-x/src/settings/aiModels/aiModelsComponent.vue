@@ -204,6 +204,25 @@
 
       </div>
 
+      <!-- Performance Comparison Chart -->
+      <div
+          v-if="models.length > 0"
+          class="chart-section"
+      >
+        <div class="section-header">
+
+          <h3>
+            Performance Comparison of Machine Learning Models
+          </h3>
+
+        </div>
+
+        <div class="performance-chart-container">
+          <canvas id="performanceChart"></canvas>
+        </div>
+
+      </div>
+
       <div class="table-wrapper">
 
         <table class="comparison-table">
@@ -1196,6 +1215,9 @@ const loadFromDatabase = async () => {
         status: m.status || "Good"
       }));
       console.log("Loaded model comparisons from database");
+      // Render performance comparison charts
+      await nextTick();
+      renderPerformanceCharts();
     }
   } catch (error) {
     console.error("Failed to load from database, trying localStorage:", error);
@@ -1218,6 +1240,87 @@ const loadFromDatabase = async () => {
     } catch (e) {
       console.error("Failed to load from localStorage:", e);
     }
+  }
+};
+
+/* ==========================================================
+   PERFORMANCE COMPARISON CHARTS
+========================================================== */
+
+const renderPerformanceCharts = () => {
+  if (models.value.length === 0) return;
+
+  const modelNames = models.value.map(m => m.name);
+  const canvas = document.getElementById('performanceChart') as HTMLCanvasElement;
+  
+  if (canvas) {
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: modelNames,
+        datasets: [
+          {
+            label: 'RMSE',
+            data: models.value.map(m => m.rmse),
+            backgroundColor: '#3498db',
+            borderColor: '#3498db',
+            borderWidth: 1
+          },
+          {
+            label: 'MAE',
+            data: models.value.map(m => m.mae),
+            backgroundColor: '#2ecc71',
+            borderColor: '#2ecc71',
+            borderWidth: 1
+          },
+          {
+            label: 'MAPE %',
+            data: models.value.map(m => m.mape),
+            backgroundColor: '#e74c3c',
+            borderColor: '#e74c3c',
+            borderWidth: 1
+          },
+          {
+            label: 'R²',
+            data: models.value.map(m => m.r2),
+            backgroundColor: '#f39c12',
+            borderColor: '#f39c12',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { size: 12 }
+            }
+          },
+          title: {
+            display: true,
+            text: 'RMSE, MAE, MAPE (Lower is Better) | R² (Higher is Better)',
+            font: { size: 14 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Metric Value'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Machine Learning Models'
+            }
+          }
+        }
+      }
+    });
   }
 };
 

@@ -20,6 +20,7 @@ public class DistributionMetric {
 
     private String category;
 
+    @Column(name = "\"value\"")
     private Double value;
 
     private Double percentage;

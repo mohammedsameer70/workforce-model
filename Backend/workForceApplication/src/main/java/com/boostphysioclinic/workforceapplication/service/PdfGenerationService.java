@@ -295,11 +295,17 @@ public class PdfGenerationService {
             metricsTable.setWidth(UnitValue.createPercentValue(100));
             
             if (hasData) {
-                for (PerformanceMetric metric : performanceMetrics) {
+                // Limit to first 50 metrics to prevent OutOfMemoryError
+                int maxMetrics = Math.min(performanceMetrics.size(), 50);
+                for (int i = 0; i < maxMetrics; i++) {
+                    PerformanceMetric metric = performanceMetrics.get(i);
                     addTableRow(metricsTable, 
                         metric.getMetricName() != null ? metric.getMetricName() : "N/A",
                         metric.getValue() != null ? String.format("%.2f", metric.getValue()) : "N/A",
                         normalFont);
+                }
+                if (performanceMetrics.size() > 50) {
+                    addTableRow(metricsTable, "...", String.format("(%d more metrics)", performanceMetrics.size() - 50), normalFont);
                 }
             } else {
                 // Fallback performance metrics

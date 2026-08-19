@@ -41,8 +41,8 @@ class SettingsService {
     return response.data
   }
 
-  async saveSettings(settings: SettingsDTO): Promise<SettingsDTO> {
-    const response = await api.put<SettingsDTO>('/settings', settings)
+  async saveSettings(settings: SettingsDTO): Promise<any> {
+    const response = await api.put<any>('/settings', settings)
     return response.data
   }
 }

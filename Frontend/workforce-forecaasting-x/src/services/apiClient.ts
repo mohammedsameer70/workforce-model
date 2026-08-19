@@ -2,9 +2,8 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 15000,
+  timeout: 1200000, // 20 minutes for long-running operations like model training
 })
-
 // Add JWT token to requests
 api.interceptors.request.use(
   (config) => {

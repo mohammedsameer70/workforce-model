@@ -104,3 +104,8 @@
     gap: 1rem;
   }
 }
+
+.performance-chart-container {
+  padding: 2rem;
+  min-height: 400px;
+}

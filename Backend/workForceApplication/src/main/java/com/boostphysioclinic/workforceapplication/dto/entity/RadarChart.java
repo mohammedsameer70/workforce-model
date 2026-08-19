@@ -20,6 +20,7 @@ public class RadarChart {
 
     private String metric;
 
+    @Column(name = "\"value\"")
     private Double value;
 
     private String category;

@@ -18,50 +18,27 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/train")
 public class TrainingController {
-
     @Autowired
     private TrainingService trainingService;
-
     @Autowired
     private AIModelRepository aiModelRepository;
-
     @Autowired
     private ModelComparisonRepository modelComparisonRepository;
-
     @PostMapping
-    public ResponseEntity<String> trainModel(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("algorithms") List<String> algorithms
-    ) throws Exception {
-        System.out.println("=== Training Controller ===");
-        System.out.println("File: " + file.getOriginalFilename());
-        System.out.println("Algorithms: " + algorithms);
-
-        return ResponseEntity.ok(
-                trainingService.train(file, algorithms)
-        );
+    public ResponseEntity<String> trainModel( @RequestParam("file") MultipartFile file, @RequestParam("algorithms") List<String> algorithms) throws Exception {
+        return ResponseEntity.ok(trainingService.train(file, algorithms));
     }
-
     @GetMapping("/cleaned-dataset")
     public ResponseEntity<byte[]> downloadCleanedDataset() {
-
         byte[] csv = trainingService.downloadCleanedDataset();
-
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=cleaned_dataset.csv"
-                )
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .body(csv);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=cleaned_dataset.csv")
+                .contentType(MediaType.parseMediaType("text/csv")).body(csv);
     }
-
     @GetMapping("/latest-model")
     public ResponseEntity<AIModel> getLatestModel() {
         Optional<AIModel> latestModel = aiModelRepository.findFirstByOrderByLastTrainedDesc();
         return latestModel.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
     }
-
     @GetMapping("/model-comparisons")
     public ResponseEntity<List<ModelComparison>> getModelComparisons() {
         List<ModelComparison> comparisons = modelComparisonRepository.findAll();

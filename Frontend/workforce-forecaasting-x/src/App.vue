@@ -114,6 +114,8 @@ const showSidebar = computed(() => {
 
 .content.full-width {
   width: 100%;
+  height:100%;
+  padding: 0 !important;
 }
 
 .content::-webkit-scrollbar {

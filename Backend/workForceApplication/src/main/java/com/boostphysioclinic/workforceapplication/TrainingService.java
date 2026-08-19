@@ -96,7 +96,7 @@ public class TrainingService {
             JsonNode metrics = jsonNode.has("metrics") ? jsonNode.get("metrics") : null;
 
             AIModel aiModel = AIModel.builder()
-                    .name(fileName)
+                    .name(bestModel != null ? bestModel : "Unknown Model")
                     .algorithm(bestModel)
                     .version("1.0")
                     .status("TRAINED")

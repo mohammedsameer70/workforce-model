@@ -1,5 +1,6 @@
 package com.boostphysioclinic.workforceapplication.controller;
 
+import com.boostphysioclinic.workforceapplication.Repository.AIModelRepository;
 import com.boostphysioclinic.workforceapplication.dto.PredictionRecord;
 import com.boostphysioclinic.workforceapplication.service.CLPredictionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,11 +31,16 @@ class DashboardControllerTest {
     @MockBean
     private CLPredictionService predictionCsvService;
 
+    @MockBean
+    private AIModelRepository aiModelRepository;
+
     private List<PredictionRecord> mockPredictions;
 
     @BeforeEach
     void setUp() {
         mockPredictions = createMockPredictions();
+        when(aiModelRepository.findFirstByOrderByLastTrainedDesc())
+                .thenReturn(Optional.empty());
     }
 
     @Test
@@ -68,8 +75,8 @@ class DashboardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.metrics").exists())
                 .andExpect(jsonPath("$.charts").exists())
-                .andExpect(jsonPath("$.metrics[\"Model Name\"]").value("Trained Model"))
-                .andExpect(jsonPath("$.metrics[\"Status\"]").value("Active"))
+                .andExpect(jsonPath("$.metrics[\"Model Name\"]").value("No Model Trained"))
+                .andExpect(jsonPath("$.metrics[\"Status\"]").value("Not Trained"))
                 .andExpect(jsonPath("$.metrics[\"Total Predictions\"]").value(mockPredictions.size()))
                 .andExpect(jsonPath("$.charts.lineChart").exists())
                 .andExpect(jsonPath("$.charts.barChart").exists());
@@ -85,8 +92,8 @@ class DashboardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.metrics").exists())
                 .andExpect(jsonPath("$.charts").exists())
-                .andExpect(jsonPath("$.metrics[\"Model Name\"]").value("Not Trained"))
-                .andExpect(jsonPath("$.metrics[\"Status\"]").value("Ready to train"))
+                .andExpect(jsonPath("$.metrics[\"Model Name\"]").value("No Model Trained"))
+                .andExpect(jsonPath("$.metrics[\"Status\"]").value("Not Trained"))
                 .andExpect(jsonPath("$.metrics[\"Total Predictions\"]").value(0))
                 .andExpect(jsonPath("$.charts.lineChart").exists())
                 .andExpect(jsonPath("$.charts.barChart").exists());
@@ -98,6 +105,8 @@ class DashboardControllerTest {
 
         when(predictionCsvService.getPredictions())
                 .thenThrow(new IOException("Test error"));
+        when(aiModelRepository.findFirstByOrderByLastTrainedDesc())
+                .thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/dashboard"))
                 .andExpect(status().isOk())
@@ -137,5 +146,5 @@ class DashboardControllerTest {
         }
 
         return predictions;
-    }
+    }/**/
 }

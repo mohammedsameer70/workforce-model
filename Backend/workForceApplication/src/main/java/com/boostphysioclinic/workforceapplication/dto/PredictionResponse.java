@@ -1,15 +1,19 @@
 package com.boostphysioclinic.workforceapplication.dto;
 
 import com.boostphysioclinic.workforceapplication.dto.PredictionResultDTO;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.*;
 
 import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PredictionResponse {
 
     private String model;
@@ -33,5 +37,7 @@ public class PredictionResponse {
 
     private List<PredictionResultDTO> results;
 
+    @JsonDeserialize(using = PredictionListDeserializer.class)
+    private List<PredictionResultDTO> predictions;
 
 }

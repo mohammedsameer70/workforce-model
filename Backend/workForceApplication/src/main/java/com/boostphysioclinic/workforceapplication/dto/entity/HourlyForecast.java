@@ -18,6 +18,7 @@ public class HourlyForecast {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "\"hour\"")
     private String hour;
 
     private Double predictedDemand;

@@ -482,6 +482,33 @@
   font-size: 0.75rem;
 }
 
+.chart-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-section .section-header {
+  background: #f0f9ff;
+  border-bottom: 2px solid #e0e7ff;
+  padding: 1.5rem;
+}
+
+.chart-section .section-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.performance-chart-container {
+  padding: 2rem;
+  min-height: 400px;
+}
+
 @media (max-width: 768px) {
   .cardsInfo {
     grid-template-columns: 1fr;

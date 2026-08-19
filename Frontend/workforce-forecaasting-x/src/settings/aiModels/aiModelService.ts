@@ -1,11 +1,11 @@
-import axios from "axios";
+import api from "@/services/apiClient";
 import type { TrainingResponseDTO } from "./trainingDTO";
 
 class AIModelService {
 
     async train(formData: FormData, signal?: AbortSignal): Promise<TrainingResponseDTO> {
-        const response = await axios.post(
-            "/api/train",
+        const response = await api.post(
+            "/train",
             formData,
             {
                 headers: {
@@ -18,8 +18,8 @@ class AIModelService {
     }
 
     async downloadCleanedDataset(): Promise<Blob> {
-    const response = await axios.get(
-        "/api/train/cleaned-dataset",
+    const response = await api.get(
+        "/train/cleaned-dataset",
         {
             responseType: "blob"
         }
@@ -28,8 +28,8 @@ class AIModelService {
     }
 
     async predict(formData: FormData) {
-    const response = await axios.post(
-        "/api/predict",
+    const response = await api.post(
+        "/predict",
         formData,
         {
             headers: {
@@ -41,22 +41,22 @@ class AIModelService {
     }
 
     async getLatestPrediction() {
-        const response = await axios.get(
-            "/api/predict/latest"
+        const response = await api.get(
+            "/predict/latest"
         );
         return response.data;
     }
 
     async getLatestModel() {
-        const response = await axios.get(
-            "/api/train/latest-model"
+        const response = await api.get(
+            "/train/latest-model"
         );
         return response.data;
     }
 
     async getModelComparisons() {
-        const response = await axios.get(
-            "/api/train/model-comparisons"
+        const response = await api.get(
+            "/train/model-comparisons"
         );
         return response.data;
     }

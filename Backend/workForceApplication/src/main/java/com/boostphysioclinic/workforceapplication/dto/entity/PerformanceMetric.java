@@ -20,6 +20,7 @@ public class PerformanceMetric {
 
     private String metricName;
 
+    @Column(name = "\"value\"")
     private Double value;
 
     private String category;

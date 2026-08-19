@@ -1,6 +1,8 @@
 package com.boostphysioclinic.workforceapplication.controller;
 
+import com.boostphysioclinic.workforceapplication.Repository.AIModelRepository;
 import com.boostphysioclinic.workforceapplication.dto.PredictionRecord;
+import com.boostphysioclinic.workforceapplication.dto.entity.AIModel;
 import com.boostphysioclinic.workforceapplication.service.CLPredictionService;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -19,6 +22,9 @@ public class DashboardController {
 
     @Autowired
     private CLPredictionService predictionCsvService;
+
+    @Autowired
+    private AIModelRepository aiModelRepository;
 
     @GetMapping("/predictions")
     public List<PredictionRecord> getPredictions()
@@ -34,6 +40,9 @@ public class DashboardController {
         Map<String, Object> charts = new HashMap<>();
 
         try {
+            // Fetch latest trained model from database
+            Optional<AIModel> latestModel = aiModelRepository.findFirstByOrderByLastTrainedDesc();
+            
             List<PredictionRecord> predictions = predictionCsvService.getPredictions();
             
             // Calculate real metrics from predictions
@@ -53,10 +62,28 @@ public class DashboardController {
                 // Calculate accuracy (simplified)
                 double accuracy = 100 - (Math.abs(avgPredicted - avgHistorical) / avgHistorical * 100);
                 
-                metrics.put("Model Name", "Trained Model");
-                metrics.put("R² Score", String.format("%.4f", 0.85 + (Math.random() * 0.1)));
-                metrics.put("RMSE", String.format("%.4f", avgPredicted * 0.1));
-                metrics.put("Status", "Active");
+                // Use actual model data if available, otherwise use calculated values
+                if (latestModel.isPresent()) {
+                    AIModel model = latestModel.get();
+                    metrics.put("Model Name", model.getName() != null ? model.getName() : model.getAlgorithm());
+                    metrics.put("R² Score", model.getRSquared() != null ? String.format("%.4f", model.getRSquared()) : "N/A");
+                    metrics.put("RMSE", model.getRmse() != null ? String.format("%.4f", model.getRmse()) : "N/A");
+                    metrics.put("MAE", model.getMae() != null ? String.format("%.4f", model.getMae()) : "N/A");
+                    metrics.put("MAPE", model.getMape() != null ? String.format("%.4f", model.getMape()) : "N/A");
+                    metrics.put("Status", model.getStatus() != null ? model.getStatus() : "Unknown");
+                    metrics.put("Algorithm", model.getAlgorithm() != null ? model.getAlgorithm() : "Unknown");
+                    metrics.put("Version", model.getVersion() != null ? model.getVersion() : "N/A");
+                } else {
+                    metrics.put("Model Name", "No Model Trained");
+                    metrics.put("R² Score", "N/A");
+                    metrics.put("RMSE", "N/A");
+                    metrics.put("MAE", "N/A");
+                    metrics.put("MAPE", "N/A");
+                    metrics.put("Status", "Not Trained");
+                    metrics.put("Algorithm", "N/A");
+                    metrics.put("Version", "N/A");
+                }
+                
                 metrics.put("Total Predictions", predictions.size());
                 metrics.put("Average Demand", String.format("%.2f", avgPredicted));
                 metrics.put("Accuracy", String.format("%.1f%%", accuracy));
@@ -108,10 +135,27 @@ public class DashboardController {
                 charts.put("barChart", barChartData);
 
             } else {
-                metrics.put("Model Name", "Not Trained");
-                metrics.put("R² Score", "Pending");
-                metrics.put("RMSE", "Pending");
-                metrics.put("Status", "Ready to train");
+                // No predictions, but check if model exists
+                if (latestModel.isPresent()) {
+                    AIModel model = latestModel.get();
+                    metrics.put("Model Name", model.getName() != null ? model.getName() : model.getAlgorithm());
+                    metrics.put("R² Score", model.getRSquared() != null ? String.format("%.4f", model.getRSquared()) : "N/A");
+                    metrics.put("RMSE", model.getRmse() != null ? String.format("%.4f", model.getRmse()) : "N/A");
+                    metrics.put("MAE", model.getMae() != null ? String.format("%.4f", model.getMae()) : "N/A");
+                    metrics.put("MAPE", model.getMape() != null ? String.format("%.4f", model.getMape()) : "N/A");
+                    metrics.put("Status", model.getStatus() != null ? model.getStatus() : "Unknown");
+                    metrics.put("Algorithm", model.getAlgorithm() != null ? model.getAlgorithm() : "Unknown");
+                    metrics.put("Version", model.getVersion() != null ? model.getVersion() : "N/A");
+                } else {
+                    metrics.put("Model Name", "No Model Trained");
+                    metrics.put("R² Score", "N/A");
+                    metrics.put("RMSE", "N/A");
+                    metrics.put("MAE", "N/A");
+                    metrics.put("MAPE", "N/A");
+                    metrics.put("Status", "Not Trained");
+                    metrics.put("Algorithm", "N/A");
+                    metrics.put("Version", "N/A");
+                }
                 metrics.put("Total Predictions", 0);
                 metrics.put("Average Demand", "N/A");
                 metrics.put("Accuracy", "N/A");
@@ -121,10 +165,28 @@ public class DashboardController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            metrics.put("Model Name", "Error loading data");
-            metrics.put("R² Score", "Error");
-            metrics.put("RMSE", "Error");
-            metrics.put("Status", "Error");
+            // Try to at least get model data on error
+            Optional<AIModel> latestModel = aiModelRepository.findFirstByOrderByLastTrainedDesc();
+            if (latestModel.isPresent()) {
+                AIModel model = latestModel.get();
+                metrics.put("Model Name", model.getName() != null ? model.getName() : model.getAlgorithm());
+                metrics.put("R² Score", model.getRSquared() != null ? String.format("%.4f", model.getRSquared()) : "Error");
+                metrics.put("RMSE", model.getRmse() != null ? String.format("%.4f", model.getRmse()) : "Error");
+                metrics.put("MAE", model.getMae() != null ? String.format("%.4f", model.getMae()) : "Error");
+                metrics.put("MAPE", model.getMape() != null ? String.format("%.4f", model.getMape()) : "Error");
+                metrics.put("Status", "Error loading predictions");
+                metrics.put("Algorithm", model.getAlgorithm() != null ? model.getAlgorithm() : "Unknown");
+                metrics.put("Version", model.getVersion() != null ? model.getVersion() : "N/A");
+            } else {
+                metrics.put("Model Name", "Error loading data");
+                metrics.put("R² Score", "Error");
+                metrics.put("RMSE", "Error");
+                metrics.put("MAE", "Error");
+                metrics.put("MAPE", "Error");
+                metrics.put("Status", "Error");
+                metrics.put("Algorithm", "Error");
+                metrics.put("Version", "Error");
+            }
             metrics.put("Total Predictions", "Error");
             metrics.put("Average Demand", "Error");
             metrics.put("Accuracy", "Error");
