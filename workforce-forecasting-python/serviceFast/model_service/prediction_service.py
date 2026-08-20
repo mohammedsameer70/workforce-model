@@ -25,8 +25,8 @@ class PredictionService:
         # Create results with metadata for backend
         results = []
         for i, pred in enumerate(predictions):
-            result = { "attendanceDate": dataframe.iloc[i].get("AttendanceDate", ""), "department": dataframe.iloc[i].get("Department", ""),
-                "actualDemand": dataframe.iloc[i].get("WorkforceDemand", None), "predictedDemand": float(pred)
+            result = { "AttendanceDate": dataframe.iloc[i].get("AttendanceDate", ""), "Department": dataframe.iloc[i].get("Department", ""),
+                "ActualDemand": dataframe.iloc[i].get("WorkforceDemand", None), "PredictedDemand": float(pred)
             }
             results.append(result)
         return { "model": self.model_info["Model"], "total_records": len(predictions), "predictions": predictions.tolist(),"results": results}
