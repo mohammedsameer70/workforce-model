@@ -1,5 +1,6 @@
 package com.boostphysioclinic.workforceapplication.dto.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,6 +33,7 @@ public class AIModel {
 
     private Double mape;
 
+    @JsonProperty("r2")
     private Double rSquared;
 
     private Long trainingTime;
