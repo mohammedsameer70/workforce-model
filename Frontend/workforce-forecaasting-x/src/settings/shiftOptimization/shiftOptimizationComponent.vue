@@ -237,7 +237,14 @@
       <div class="formGrid">
         <div class="formField">
           <label>Department</label>
-          <InputText v-model="allocationForm.department" placeholder="Enter department name" fluid />
+          <Dropdown 
+            v-model="allocationForm.department" 
+            :options="departmentOptions" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select department"
+            fluid 
+          />
         </div>
 
         <div class="formField">
@@ -290,6 +297,7 @@
     <div class="header">
       <h2>Shift Coverage Matrix</h2>
       <p>Current allocation with gap analysis</p>
+      <Button label="Refresh" icon="pi pi-refresh" @click="loadShiftOptimizationData" :loading="loading" />
     </div>
 
     <DataTable :value="coverageData" stripedRows responsiveLayout="scroll" class="modern-table">
@@ -357,6 +365,21 @@ const dayOptions = [
   { label: 'Friday', value: 'Friday' },
   { label: 'Saturday', value: 'Saturday' },
   { label: 'Sunday', value: 'Sunday' }
+]
+
+const departmentOptions = [
+  { label: 'HR', value: 'HR' },
+  { label: 'IT', value: 'IT' },
+  { label: 'Finance', value: 'Finance' },
+  { label: 'Operations', value: 'Operations' },
+  { label: 'Marketing', value: 'Marketing' },
+  { label: 'Sales', value: 'Sales' },
+  { label: 'Legal', value: 'Legal' },
+  { label: 'Customer Service', value: 'Customer Service' },
+  { label: 'Research & Development', value: 'Research & Development' },
+  { label: 'Logistics', value: 'Logistics' },
+  { label: 'Quality Assurance', value: 'Quality Assurance' },
+  { label: 'Administration', value: 'Administration' }
 ]
 
 const metrics = ref<ShiftMetricDTO[]>([])

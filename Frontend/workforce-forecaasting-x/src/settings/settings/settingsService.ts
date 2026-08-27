@@ -28,11 +28,22 @@ export interface SettingsConfigDTO {
   dataRetention?: number
 }
 
+export interface SettingsAIModelDTO {
+  activeModel: string
+  version: string
+  trainingFrequency: string
+  confidenceThreshold: number
+  autoRetrain: boolean
+  monitoring: boolean
+  featureImportance: boolean
+}
+
 export interface SettingsDTO {
   profile: SettingsProfileDTO
   appearance: SettingsAppearanceDTO
   notifications: SettingsNotificationDTO
   config: SettingsConfigDTO
+  aiModel: SettingsAIModelDTO
 }
 
 class SettingsService {

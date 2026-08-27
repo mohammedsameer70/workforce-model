@@ -50,6 +50,15 @@ public class SettingsController {
                     "mlUrl", settings.getMlUrl() != null ? settings.getMlUrl() : "",
                     "dataRetention", settings.getDataRetention() != null ? settings.getDataRetention() : 90
                 ));
+                response.put("aiModel", Map.of(
+                    "activeModel", settings.getActiveModel() != null ? settings.getActiveModel() : "",
+                    "version", settings.getModelVersion() != null ? settings.getModelVersion() : "",
+                    "trainingFrequency", settings.getTrainingFrequency() != null ? settings.getTrainingFrequency() : "",
+                    "confidenceThreshold", settings.getConfidenceThreshold() != null ? settings.getConfidenceThreshold() : 75,
+                    "autoRetrain", settings.getAutoRetrain() != null ? settings.getAutoRetrain() : false,
+                    "monitoring", settings.getMonitoring() != null ? settings.getMonitoring() : true,
+                    "featureImportance", settings.getFeatureImportance() != null ? settings.getFeatureImportance() : true
+                ));
                 return ResponseEntity.ok(response);
             } else {
                 // Return default settings if none exist
@@ -76,6 +85,15 @@ public class SettingsController {
                     "apiUrl", "",
                     "mlUrl", "",
                     "dataRetention", 90
+                ));
+                response.put("aiModel", Map.of(
+                    "activeModel", "",
+                    "version", "",
+                    "trainingFrequency", "",
+                    "confidenceThreshold", 75,
+                    "autoRetrain", false,
+                    "monitoring", true,
+                    "featureImportance", true
                 ));
                 return ResponseEntity.ok(response);
             }
@@ -134,7 +152,19 @@ public class SettingsController {
                 settings.setMlUrl((String) config.get("mlUrl"));
                 settings.setDataRetention(config.get("dataRetention") != null ? ((Number) config.get("dataRetention")).intValue() : 90);
             }
-            
+
+            // Extract AI Model settings
+            Map<String, Object> aiModel = (Map<String, Object>) payload.get("aiModel");
+            if (aiModel != null) {
+                settings.setActiveModel((String) aiModel.get("activeModel"));
+                settings.setModelVersion((String) aiModel.get("version"));
+                settings.setTrainingFrequency((String) aiModel.get("trainingFrequency"));
+                settings.setConfidenceThreshold(aiModel.get("confidenceThreshold") != null ? ((Number) aiModel.get("confidenceThreshold")).intValue() : 75);
+                settings.setAutoRetrain((Boolean) aiModel.get("autoRetrain"));
+                settings.setMonitoring((Boolean) aiModel.get("monitoring"));
+                settings.setFeatureImportance((Boolean) aiModel.get("featureImportance"));
+            }
+
             settingsRepository.save(settings);
             
             response.put("success", true);

@@ -1,8 +1,10 @@
 package com.boostphysioclinic.workforceapplication.controller;
 
 import com.boostphysioclinic.workforceapplication.Repository.AIModelRepository;
+import com.boostphysioclinic.workforceapplication.Repository.AlertRepository;
 import com.boostphysioclinic.workforceapplication.dto.PredictionRecord;
 import com.boostphysioclinic.workforceapplication.dto.entity.AIModel;
+import com.boostphysioclinic.workforceapplication.dto.entity.Alert;
 import com.boostphysioclinic.workforceapplication.service.CLPredictionService;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class DashboardController {
 
     @Autowired
     private AIModelRepository aiModelRepository;
+
+    @Autowired
+    private AlertRepository alertRepository;
 
     @GetMapping("/predictions")
     public List<PredictionRecord> getPredictions()

@@ -84,6 +84,7 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import ReportsService from './reportsService'
 import type { ReportDTO, ReportMetricDTO } from './reportsService'
+import api from '@/services/apiClient'
 
 const metrics = ref<ReportMetricDTO[]>([])
 const reports = ref<ReportDTO[]>([])
@@ -168,11 +169,43 @@ const exportReport = async (report: ReportDTO) => {
   }
 }
 
-const generateClientSidePDF = (report: ReportDTO) => {
+const generateClientSidePDF = async (report: ReportDTO) => {
   try {
     console.log('Generating client-side PDF for report:', report.report)
     
-    // Create a professional HTML-based PDF with charts
+    // Fetch real data from backend using authenticated API client
+    console.log('Fetching data from APIs...')
+    const [dashboardResponse, employeesResponse] = await Promise.all([
+      api.get('/dashboard').then(r => {
+        console.log('Dashboard response status:', r.status)
+        return r.data
+      }).catch(e => {
+        console.error('Dashboard fetch error:', e)
+        return { metrics: {}, charts: {} }
+      }),
+      api.get('/employees').then(r => {
+        console.log('Employees response status:', r.status)
+        return r.data
+      }).catch(e => {
+        console.error('Employees fetch error:', e)
+        return []
+      })
+    ])
+    
+    console.log('Dashboard data:', dashboardResponse)
+    console.log('Employees response:', employeesResponse)
+    
+    const dashboardData = dashboardResponse
+    const employeesData = Array.isArray(employeesResponse) ? employeesResponse : []
+    
+    console.log('Employees array length:', employeesData.length)
+    console.log('First employee:', employeesData[0])
+    
+    // Extract real metrics
+    const metrics = dashboardData.metrics || {}
+    const charts = dashboardData.charts || {}
+    
+    // Create a professional HTML-based PDF with real data
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -349,16 +382,16 @@ const generateClientSidePDF = (report: ReportDTO) => {
             <h3>Key Performance Indicators</h3>
             <div class="metrics">
               <div class="metric">
-                <div class="metric-value">94.5%</div>
-                <div class="metric-label">Overall Efficiency</div>
+                <div class="metric-value">${metrics['Accuracy'] || 'N/A'}</div>
+                <div class="metric-label">Forecast Accuracy</div>
               </div>
               <div class="metric">
-                <div class="metric-value">23</div>
-                <div class="metric-label">Active Employees</div>
+                <div class="metric-value">${metrics['Total Predictions'] || employeesData.length || '0'}</div>
+                <div class="metric-label">Total Predictions</div>
               </div>
               <div class="metric">
-                <div class="metric-value">17,398</div>
-                <div class="metric-label">Data Points</div>
+                <div class="metric-value">${metrics['Average Demand'] || 'N/A'}</div>
+                <div class="metric-label">Average Demand</div>
               </div>
             </div>
           </div>
@@ -392,38 +425,38 @@ const generateClientSidePDF = (report: ReportDTO) => {
             <tbody>
               <tr>
                 <td>Staff Utilization</td>
-                <td>91.2%</td>
-                <td>88.5%</td>
-                <td>+2.7%</td>
-                <td>✓ Improved</td>
+                <td>${metrics['Total Predictions'] || 'N/A'}</td>
+                <td>N/A</td>
+                <td>-</td>
+                <td>✓ Active</td>
               </tr>
               <tr>
-                <td>Patient Outcomes</td>
-                <td>94.5%</td>
-                <td>92.1%</td>
-                <td>+2.4%</td>
-                <td>✓ Improved</td>
+                <td>Forecast Accuracy</td>
+                <td>${metrics['Accuracy'] || 'N/A'}</td>
+                <td>N/A</td>
+                <td>-</td>
+                <td>✓ Active</td>
               </tr>
               <tr>
-                <td>Treatment Efficiency</td>
-                <td>89.3%</td>
-                <td>87.8%</td>
-                <td>+1.5%</td>
-                <td>✓ Improved</td>
+                <td>Model Performance</td>
+                <td>${metrics['R² Score'] || 'N/A'}</td>
+                <td>N/A</td>
+                <td>-</td>
+                <td>✓ Active</td>
               </tr>
               <tr>
-                <td>Recovery Rates</td>
-                <td>87.2%</td>
-                <td>85.9%</td>
-                <td>+1.3%</td>
-                <td>✓ Improved</td>
+                <td>RMSE</td>
+                <td>${metrics['RMSE'] || 'N/A'}</td>
+                <td>N/A</td>
+                <td>-</td>
+                <td>✓ Active</td>
               </tr>
               <tr>
-                <td>Session Completion</td>
-                <td>95.1%</td>
-                <td>93.4%</td>
-                <td>+1.7%</td>
-                <td>✓ Improved</td>
+                <td>Model Status</td>
+                <td>${metrics['Status'] || 'N/A'}</td>
+                <td>N/A</td>
+                <td>-</td>
+                <td>✓ Active</td>
               </tr>
             </tbody>
           </table>
@@ -431,15 +464,6 @@ const generateClientSidePDF = (report: ReportDTO) => {
 
         <div class="section">
           <h2 class="section-title">Department Breakdown</h2>
-          <div class="chart-container">
-            <div class="chart-placeholder" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-              <div>
-                <div style="font-size: 24px; margin-bottom: 10px;">📈</div>
-                <div>Department Distribution</div>
-                <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">Employee distribution by department</div>
-              </div>
-            </div>
-          </div>
           <table class="data-table">
             <thead>
               <tr>
@@ -451,27 +475,19 @@ const generateClientSidePDF = (report: ReportDTO) => {
               </tr>
             </thead>
             <tbody>
+              ${employeesData.length > 0 ? employeesData.slice(0, 5).map((emp: any) => `
               <tr>
-                <td>Physiotherapy</td>
-                <td>12</td>
-                <td>91.2%</td>
-                <td>94.5%</td>
-                <td>✓ Excellent</td>
+                <td>${emp.department || 'Unknown'}</td>
+                <td>1</td>
+                <td>${metrics['Average Demand'] || 'N/A'}</td>
+                <td>${metrics['Accuracy'] || 'N/A'}</td>
+                <td>✓ Active</td>
               </tr>
+              `).join('') : `
               <tr>
-                <td>Rehabilitation</td>
-                <td>8</td>
-                <td>88.7%</td>
-                <td>87.2%</td>
-                <td>✓ Good</td>
+                <td colspan="5">No employee data available</td>
               </tr>
-              <tr>
-                <td>Sports Medicine</td>
-                <td>3</td>
-                <td>92.1%</td>
-                <td>89.3%</td>
-                <td>✓ Excellent</td>
-              </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -483,47 +499,25 @@ const generateClientSidePDF = (report: ReportDTO) => {
               <tr>
                 <th>Employee</th>
                 <th>Department</th>
-                <th>Sessions</th>
+                <th>Tasks Completed</th>
                 <th>Efficiency</th>
                 <th>Rating</th>
               </tr>
             </thead>
             <tbody>
+              ${employeesData.length > 0 ? employeesData.slice(0, 5).map((emp: any) => `
               <tr>
-                <td>Dr. Sarah Johnson</td>
-                <td>Physiotherapy</td>
-                <td>156</td>
-                <td>95.2%</td>
-                <td>⭐⭐⭐⭐⭐</td>
-              </tr>
-              <tr>
-                <td>Dr. Michael Chen</td>
-                <td>Rehabilitation</td>
-                <td>142</td>
-                <td>91.8%</td>
-                <td>⭐⭐⭐⭐⭐</td>
-              </tr>
-              <tr>
-                <td>Dr. Emily Davis</td>
-                <td>Physiotherapy</td>
-                <td>138</td>
-                <td>89.5%</td>
+                <td>${emp.name || emp.firstName || emp.lastName || 'Unknown'}</td>
+                <td>${emp.department || 'Unknown'}</td>
+                <td>${metrics['Total Predictions'] || '0'}</td>
+                <td>${metrics['Accuracy'] || 'N/A'}</td>
                 <td>⭐⭐⭐⭐</td>
               </tr>
+              `).join('') : `
               <tr>
-                <td>Dr. James Wilson</td>
-                <td>Sports Medicine</td>
-                <td>98</td>
-                <td>93.1%</td>
-                <td>⭐⭐⭐⭐⭐</td>
+                <td colspan="5">No employee data available</td>
               </tr>
-              <tr>
-                <td>Dr. Lisa Anderson</td>
-                <td>Rehabilitation</td>
-                <td>127</td>
-                <td>87.6%</td>
-                <td>⭐⭐⭐⭐</td>
-              </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -534,227 +528,77 @@ const generateClientSidePDF = (report: ReportDTO) => {
             <h3>Workforce Demand Forecast</h3>
             <div class="metrics">
               <div class="metric">
-                <div class="metric-value">+15%</div>
-                <div class="metric-label">Next Quarter</div>
+                <div class="metric-value">${metrics['Average Demand'] || 'N/A'}</div>
+                <div class="metric-label">Average Demand</div>
               </div>
               <div class="metric">
-                <div class="metric-value">+8%</div>
-                <div class="metric-label">Next 6 Months</div>
+                <div class="metric-value">${metrics['Total Predictions'] || '0'}</div>
+                <div class="metric-label">Total Predictions</div>
               </div>
               <div class="metric">
-                <div class="metric-value">+22%</div>
-                <div class="metric-label">Next Year</div>
+                <div class="metric-value">${metrics['Accuracy'] || 'N/A'}</div>
+                <div class="metric-label">Forecast Accuracy</div>
               </div>
             </div>
           </div>
           <table class="data-table">
             <thead>
               <tr>
-                <th>Month</th>
-                <th>Predicted Demand</th>
-                <th>Current Capacity</th>
-                <th>Gap</th>
-                <th>Action Required</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>September 2026</td>
-                <td>1,245 sessions</td>
-                <td>1,200 sessions</td>
-                <td>-45 sessions</td>
-                <td>Hire 1 PT</td>
-              </tr>
-              <tr>
-                <td>October 2026</td>
-                <td>1,320 sessions</td>
-                <td>1,200 sessions</td>
-                <td>-120 sessions</td>
-                <td>Hire 2 PTs</td>
-              </tr>
-              <tr>
-                <td>November 2026</td>
-                <td>1,180 sessions</td>
-                <td>1,200 sessions</td>
-                <td>+20 sessions</td>
-                <td>No action</td>
-              </tr>
-              <tr>
-                <td>December 2026</td>
-                <td>1,090 sessions</td>
-                <td>1,200 sessions</td>
-                <td>+110 sessions</td>
-                <td>No action</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="section">
-          <h2 class="section-title">Shift Optimization Analysis</h2>
-          <div class="chart-container">
-            <div class="chart-placeholder" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-              <div>
-                <div style="font-size: 24px; margin-bottom: 10px;">⏰</div>
-                <div>Shift Utilization Chart</div>
-                <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">Optimal shift scheduling analysis</div>
-              </div>
-            </div>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Shift Type</th>
-                <th>Coverage</th>
-                <th>Efficiency</th>
-                <th>Cost</th>
-                <th>Recommendation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Morning (6AM-2PM)</td>
-                <td>95%</td>
-                <td>92%</td>
-                <td>$12,500</td>
-                <td>✓ Optimal</td>
-              </tr>
-              <tr>
-                <td>Day (8AM-5PM)</td>
-                <td>88%</td>
-                <td>89%</td>
-                <td>$15,200</td>
-                <td>⚠ Adjust</td>
-              </tr>
-              <tr>
-                <td>Evening (2PM-10PM)</td>
-                <td>82%</td>
-                <td>85%</td>
-                <td>$11,800</td>
-                <td>⚠ Adjust</td>
-              </tr>
-              <tr>
-                <td>Night (10PM-6AM)</td>
-                <td>45%</td>
-                <td>78%</td>
-                <td>$8,400</td>
-                <td>✗ Reduce</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="section">
-          <h2 class="section-title">Attendance & Leave Analysis</h2>
-          <div class="summary-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-            <h3>Attendance Overview</h3>
-            <div class="metrics">
-              <div class="metric">
-                <div class="metric-value">96.8%</div>
-                <div class="metric-label">Attendance Rate</div>
-              </div>
-              <div class="metric">
-                <div class="metric-value">3.2%</div>
-                <div class="metric-label">Absenteeism</div>
-              </div>
-              <div class="metric">
-                <div class="metric-value">12</div>
-                <div class="metric-label">Leave Days</div>
-              </div>
-            </div>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Present Days</th>
-                <th>Absent Days</th>
-                <th>Leave Days</th>
-                <th>Attendance %</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Dr. Sarah Johnson</td>
-                <td>22</td>
-                <td>0</td>
-                <td>0</td>
-                <td>100%</td>
-              </tr>
-              <tr>
-                <td>Dr. Michael Chen</td>
-                <td>21</td>
-                <td>1</td>
-                <td>0</td>
-                <td>95.5%</td>
-              </tr>
-              <tr>
-                <td>Dr. Emily Davis</td>
-                <td>20</td>
-                <td>0</td>
-                <td>2</td>
-                <td>90.9%</td>
-              </tr>
-              <tr>
-                <td>Dr. James Wilson</td>
-                <td>22</td>
-                <td>0</td>
-                <td>0</td>
-                <td>100%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="section">
-          <h2 class="section-title">Capacity Planning</h2>
-          <div class="chart-container">
-            <div class="chart-placeholder" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
-              <div>
-                <div style="font-size: 24px; margin-bottom: 10px;">📊</div>
-                <div>Capacity Utilization</div>
-                <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">Current vs optimal capacity analysis</div>
-              </div>
-            </div>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Resource</th>
-                <th>Current Usage</th>
-                <th>Capacity</th>
-                <th>Utilization</th>
+                <th>Metric</th>
+                <th>Value</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Treatment Rooms</td>
-                <td>8/10</td>
-                <td>10</td>
-                <td>80%</td>
-                <td>✓ Good</td>
+                <td>R² Score</td>
+                <td>${metrics['R² Score'] || 'N/A'}</td>
+                <td>✓ Available</td>
               </tr>
               <tr>
-                <td>Equipment</td>
-                <td>15/18</td>
-                <td>18</td>
-                <td>83%</td>
-                <td>✓ Good</td>
+                <td>RMSE</td>
+                <td>${metrics['RMSE'] || 'N/A'}</td>
+                <td>✓ Available</td>
               </tr>
               <tr>
-                <td>Staff Hours</td>
-                <td>184/200</td>
-                <td>200</td>
-                <td>92%</td>
-                <td>⚠ Near Limit</td>
+                <td>Model Status</td>
+                <td>${metrics['Status'] || 'N/A'}</td>
+                <td>✓ Available</td>
               </tr>
               <tr>
-                <td>Patient Slots</td>
-                <td>156/180</td>
-                <td>180</td>
-                <td>87%</td>
-                <td>✓ Good</td>
+                <td>Model Name</td>
+                <td>${metrics['Model Name'] || 'N/A'}</td>
+                <td>✓ Available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Model Information</h2>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Algorithm</td>
+                <td>${metrics['Algorithm'] || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>Version</td>
+                <td>${metrics['Version'] || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>MAE</td>
+                <td>${metrics['MAE'] || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>MAPE</td>
+                <td>${metrics['MAPE'] || 'N/A'}</td>
               </tr>
             </tbody>
           </table>

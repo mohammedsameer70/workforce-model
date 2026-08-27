@@ -268,6 +268,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useToast } from 'primevue/usetoast'
 
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -277,11 +278,10 @@ import InputSwitch from 'primevue/inputswitch'
 import InputNumber from 'primevue/inputnumber'
 import SettingsService from './settingsService'
 import type { SettingsDTO } from './settingsService'
-import { aiModelReady, isTraining, isPredicting } from '@/state/aiModelGate'
 
 const roles = ['Super Admin', 'Operations Admin', 'Manager']
-const departments = ['All Departments', 'Inbound', 'Outbound', 'Packing', 'Sortation']
-const models = ['LSTM v3.2 (Active)', 'XGBoost v2.1', 'Prophet v1.0']
+const departments = ['HR', 'IT', 'Finance', 'Operations', 'Marketing', 'Sales', 'Legal', 'Customer Service', 'Research & Development', 'Logistics', 'Quality Assurance', 'Administration']
+const models = ['LSTM v3.2 (Active)', 'XGBoost v2.1']
 const refreshOptions = ['30 seconds', '1 minute', '5 minutes']
 const aiModelOptions = [
   'LSTM v3.2',
@@ -332,6 +332,7 @@ const aiModel = ref({
 
 const loading = ref(false)
 const message = ref('')
+const toast = useToast()
 
 const isAiModelDisabled = computed(() => false)
 const loadSettings = async () => {
@@ -355,9 +356,18 @@ const loadSettings = async () => {
       ml: data.config.mlUrl,
       dataRetention: data.config.dataRetention || 90,
     }
+    aiModel.value = {
+      activeModel: data.aiModel.activeModel || 'LSTM v3.2',
+      version: data.aiModel.version || '3.2.1',
+      trainingFrequency: data.aiModel.trainingFrequency || 'Weekly',
+      confidenceThreshold: data.aiModel.confidenceThreshold || 75,
+      autoRetrain: data.aiModel.autoRetrain || false,
+      monitoring: data.aiModel.monitoring !== undefined ? data.aiModel.monitoring : true,
+      featureImportance: data.aiModel.featureImportance !== undefined ? data.aiModel.featureImportance : true,
+    }
   } catch (err) {
     console.error('Failed to load settings', err)
-    message.value = 'Unable to load settings.'
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Unable to load settings', life: 3000 })
   } finally {
     loading.value = false
   }
@@ -384,12 +394,21 @@ const saveChanges = async () => {
         mlUrl: config.value.ml,
         dataRetention: config.value.dataRetention,
       },
+      aiModel: {
+        activeModel: aiModel.value.activeModel,
+        version: aiModel.value.version,
+        trainingFrequency: aiModel.value.trainingFrequency,
+        confidenceThreshold: aiModel.value.confidenceThreshold,
+        autoRetrain: aiModel.value.autoRetrain,
+        monitoring: aiModel.value.monitoring,
+        featureImportance: aiModel.value.featureImportance,
+      },
     }
     await SettingsService.saveSettings(payload)
-    message.value = 'Settings saved successfully.'
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully', life: 3000 })
   } catch (err) {
     console.error('Failed to save settings', err)
-    message.value = 'Unable to save settings.'
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Unable to save settings', life: 3000 })
   } finally {
     loading.value = false
   }
@@ -399,100 +418,8 @@ const cancelChanges = () => {
   loadSettings()
 }
 
-/* ==========================================================
-   PERFORMANCE COMPARISON CHART
-========================================================== */
-
-const loadModelComparisons = async () => {
-  try {
-    const comparisons = await AIModelService.getModelComparisons();
-    if (comparisons && Array.isArray(comparisons) && comparisons.length > 0) {
-      await nextTick();
-      renderPerformanceChart(comparisons);
-    }
-  } catch (error) {
-    console.error('Failed to load model comparisons:', error);
-  }
-};
-
-const renderPerformanceChart = (comparisons: any[]) => {
-  const canvas = document.getElementById('performanceChart') as HTMLCanvasElement;
-  if (!canvas) return;
-
-  const modelNames = comparisons.map((m: any) => m.modelName || m.algorithm);
-  
-  new ChartJS(canvas, {
-    type: 'bar',
-    data: {
-      labels: modelNames,
-      datasets: [
-        {
-          label: 'RMSE',
-          data: comparisons.map((m: any) => m.rmse),
-          backgroundColor: '#3498db',
-          borderColor: '#3498db',
-          borderWidth: 1
-        },
-        {
-          label: 'MAE',
-          data: comparisons.map((m: any) => m.mae),
-          backgroundColor: '#2ecc71',
-          borderColor: '#2ecc71',
-          borderWidth: 1
-        },
-        {
-          label: 'MAPE %',
-          data: comparisons.map((m: any) => m.mape),
-          backgroundColor: '#e74c3c',
-          borderColor: '#e74c3c',
-          borderWidth: 1
-        },
-        {
-          label: 'R²',
-          data: comparisons.map((m: any) => m.rSquared),
-          backgroundColor: '#f39c12',
-          borderColor: '#f39c12',
-          borderWidth: 1
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            font: { size: 12 }
-          }
-        },
-        title: {
-          display: true,
-          text: 'RMSE, MAE, MAPE (Lower is Better) | R² (Higher is Better)',
-          font: { size: 14 }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Metric Value'
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Machine Learning Models'
-          }
-        }
-      }
-    }
-  });
-};
-
 onMounted(() => {
   loadSettings()
-  loadModelComparisons()
 })
 </script>
 

@@ -179,6 +179,11 @@
 }
 
 .progress-section {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
   margin-bottom: 1rem;
 }
 

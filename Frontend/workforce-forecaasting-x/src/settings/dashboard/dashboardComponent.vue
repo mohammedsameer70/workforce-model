@@ -123,97 +123,11 @@ import { lbl } from '@/assets/constants/labels'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { Chart as ChartJS,LineElement,BarElement, BarController,CategoryScale,LinearScale,PointElement,Tooltip,Legend} from 'chart.js'
-import CLDashboardService from '../aiModels/dashboardService'
+import CLDashboardService from './dashboardService'
 ChartJS.register( LineElement,BarElement,BarController,CategoryScale,LinearScale,PointElement,Tooltip,Legend,)
 let refreshInterval: number | null = null
-const staffingData = ref([
-  {
-    department: 'Inbound',
-    morning: 22,
-    afternoon: 40,
-    night: 19,
-    total: 81,
-  },
-  {
-    department: 'Outbound',
-    morning: 33,
-    afternoon: 31,
-    night: 20,
-    total: 84,
-  },
-  {
-    department: 'Sortation',
-    morning: 38,
-    afternoon: 53,
-    night: 23,
-    total: 114,
-  },
-  {
-    department: 'Packing',
-    morning: 39,
-    afternoon: 52,
-    night: 28,
-    total: 119,
-  },
-  {
-    department: 'Returns',
-    morning: 27,
-    afternoon: 28,
-    night: 29,
-    total: 84,
-  },
-  {
-    department: 'Quality Control',
-    morning: 34,
-    afternoon: 60,
-    night: 19,
-    total: 113,
-  },
-])
-const alerts = ref([
-  {
-    severity: 'critical',
-    title: 'Outbound department understaffed by 12 workers for afternoon shift',
-    time: '2 min ago',
-    department: 'Outbound',
-    icon: 'pi pi-users',
-  },
-  {
-    severity: 'warning',
-    title: 'analytics-engine service CPU usage above 65% threshold',
-    time: '8 min ago',
-    department: 'System',
-    icon: 'pi pi-server',
-  },
-  {
-    severity: 'success',
-    title: 'ML model v3.2 deployed successfully — forecast accuracy improved to 94.2%',
-    time: '15 min ago',
-    department: 'ML Pipeline',
-    icon: 'pi pi-chart-line',
-  },
-  {
-    severity: 'warning',
-    title: 'Projected overtime breach: Packing dept. 14:00-22:00 shift',
-    time: '22 min ago',
-    department: 'Packing',
-    icon: 'pi pi-clock',
-  },
-  {
-    severity: 'success',
-    title: 'Shift optimization completed for next 7-day window',
-    time: '35 min ago',
-    department: 'Planning',
-    icon: 'pi pi-calendar',
-  },
-  {
-    severity: 'critical',
-    title: 'Night shift coverage at 68% — below 75% minimum threshold',
-    time: '1 hour ago',
-    department: 'Operations',
-    icon: 'pi pi-exclamation-triangle',
-  },
-])
+const staffingData = ref([])
+const alerts = ref([])
 /* ---------------- KPI METRICS ---------------- */
 const metrics = ref([
   {
@@ -369,6 +283,23 @@ const fetchDashboardMetrics = async () => {
           charts.barChart.target
         )
       }
+    }
+
+    // Load staffing data from API
+    try {
+      const staffingResponse = await CLDashboardService.getStaffingHeatmap()
+      staffingData.value = staffingResponse
+    } catch (error) {
+      console.error('Failed to fetch staffing data:', error)
+    }
+
+    // Load alerts from API
+    try {
+      const alertsResponse = await CLDashboardService.getAlerts()
+      alerts.value = alertsResponse
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error)
+      // Alerts are optional - continue without them
     }
   } catch (error) {
     console.error('Failed to fetch dashboard metrics:', error)

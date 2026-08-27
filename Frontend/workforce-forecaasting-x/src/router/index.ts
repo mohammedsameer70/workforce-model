@@ -109,9 +109,6 @@ const router = createRouter({
   ],
 })
 router.beforeEach(async (to, from, next) => {
-  console.log('Router guard checking route:', to.path)
-  console.log('Is authenticated:', AuthService.isAuthenticated())
-  console.log('Current user:', AuthService.getCurrentUser())
   
   // Check authentication
   if (to.meta.requiresAuth && !AuthService.isAuthenticated()) {
@@ -125,7 +122,7 @@ router.beforeEach(async (to, from, next) => {
     const requiredRoles = to.meta.roles as string[]
     
     console.log('Checking role access. User role:', userRole, 'Required roles:', requiredRoles)
-    
+
     if (!requiredRoles.includes(userRole || '')) {
       alert('You do not have permission to access this page.')
       return next('/homeSettings')
@@ -138,11 +135,11 @@ router.beforeEach(async (to, from, next) => {
     return next('/homeSettings')
   }
 
-  const allowedPaths = [ROUTES.HOMESETTINGS, ROUTES.AI_MODELS, ROUTES.DASHBOARD]
+  const allowedPaths = [ROUTES.HOMESETTINGS, ROUTES.AI_MODELS, ROUTES.DASHBOARD, ROUTES.SETTINGS]
 
-  // Disable all screens except AI_MODELS during training or prediction
+  // Disable all screens except AI_MODELS and SETTINGS during training or prediction
   if ((isTraining.value || isPredicting.value)) {
-    if (to.path !== ROUTES.AI_MODELS && to.path !== '/login') {
+    if (to.path !== ROUTES.AI_MODELS && to.path !== ROUTES.SETTINGS && to.path !== '/login') {
       alert('Please wait for training/prediction to complete before navigating to other screens.')
       return next(false)
     }

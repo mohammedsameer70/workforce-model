@@ -512,7 +512,7 @@
                 :disabled="!predictionFile || isPredicting"
             >
 
-              <i class="pi pi-play"></i>
+              <i class="pi pi-play "></i>
 
               {{
                 isPredicting
@@ -527,7 +527,7 @@
 
           <div
               v-if="isPredicting"
-              class="progress-section"
+              class="progress-section actions"
           >
 
             <p>

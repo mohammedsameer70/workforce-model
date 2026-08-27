@@ -140,7 +140,7 @@ import type { EmployeeDTO } from './employeesService'
 const search = ref('')
 const selectedDepartment = ref<string | null>(null)
 const selectedStatus = ref<string | null>(null)
-const departments = ref(['Inbound', 'Outbound', 'Packing', 'Returns', 'Sortation', 'Quality Control'])
+const departments = ref(['HR', 'IT', 'Finance', 'Operations', 'Marketing', 'Sales', 'Legal', 'Customer Service', 'Research & Development', 'Logistics', 'Quality Assurance', 'Administration'])
 const statuses = ref(['Active', 'Leave'])
 const employees = ref<EmployeeDTO[]>([])
 const loading = ref(false)
